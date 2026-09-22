@@ -1,0 +1,1185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+  :root{color-scheme:light}
+  html,body{margin:0}
+  body{font:14px system-ui,-apple-system,"Segoe UI",sans-serif;background:#F5F6F9}
+  img{max-width:100%}
+  [hidden]{display:none!important}
+  @page{size:A4;margin:14mm}
+  @media print{
+    body{background:#fff}
+    section{break-inside:auto}
+    h2,h3{break-after:avoid}
+    .tbl,pre,.panel,.feature,.callout{break-inside:avoid}
+    a{color:#2A4A9A;text-decoration:none}
+  }
+</style>
+</head>
+<body>
+<title>Deskwork Build Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --paper:#F5F6F9;
+  --sheet:#FFFFFF;
+  --ink:#1A2030;
+  --muted:#5A6377;
+  --rule:#DCE0E8;
+  --rule-soft:#E9ECF2;
+  --blue:#2A4A9A;
+  --blue-soft:#E6ECFA;
+  --red:#B8352A;
+  --red-soft:#FBEAE8;
+  --green:#1F7A4D;
+  --green-soft:#E3F3EA;
+  --amber:#9A6700;
+  --amber-soft:#FBF1D9;
+  --code-bg:#F0F2F7;
+  --display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --body:"Source Sans 3", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#11141B; --sheet:#171B24; --ink:#E4E8F1; --muted:#9AA3B6; --rule:#2C3342; --rule-soft:#222835;
+    --blue:#93AEF2; --blue-soft:#1E2A47; --red:#F08A7E; --red-soft:#3A1F1D; --green:#6FD1A0; --green-soft:#16302A;
+    --amber:#E8BE5C; --amber-soft:#342A14; --code-bg:#1D2230;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#11141B; --sheet:#171B24; --ink:#E4E8F1; --muted:#9AA3B6; --rule:#2C3342; --rule-soft:#222835;
+  --blue:#93AEF2; --blue-soft:#1E2A47; --red:#F08A7E; --red-soft:#3A1F1D; --green:#6FD1A0; --green-soft:#16302A;
+  --amber:#E8BE5C; --amber-soft:#342A14; --code-bg:#1D2230;
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16.5px;line-height:1.6;padding-inline:16px;}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:230px minmax(0,1fr);gap:48px;padding-block:40px 80px;}
+nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px);align-self:start;max-height:calc(100vh - 48px);overflow:auto;font-size:14px;}
+nav.toc p{font-family:var(--display);font-weight:700;margin:0 0 10px;letter-spacing:.02em}
+nav.toc ol{list-style:none;padding:0;margin:0;display:grid;gap:2px}
+nav.toc a{color:var(--muted);text-decoration:none;display:block;padding:3px 8px;border-radius:6px}
+nav.toc a:hover,nav.toc a:focus-visible{color:var(--ink);background:var(--rule-soft);outline:none}
+main{min-width:0}
+header.top{border-bottom:2px solid var(--ink);padding-bottom:24px;margin-bottom:8px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--display);font-size:clamp(34px,5vw,50px);line-height:1.05;margin:8px 0 12px;text-wrap:balance;font-weight:700}
+h1 .mark{color:var(--red)}
+.lede{font-size:19px;max-width:62ch;margin:0;color:var(--ink)}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:16px;font-size:14px;color:var(--muted)}
+.meta b{color:var(--ink);font-weight:600}
+section{padding-top:44px}
+h2{font-family:var(--display);font-size:28px;line-height:1.15;margin:0 0 6px;text-wrap:balance;font-weight:700;display:flex;gap:12px;align-items:baseline}
+h2 .n{font-family:var(--mono);font-size:14px;color:var(--red);font-weight:600;min-width:2ch}
+.sub{color:var(--muted);margin:0 0 18px;max-width:68ch}
+h3{font-family:var(--display);font-size:19px;margin:28px 0 8px;font-weight:700}
+h4{font-size:15px;margin:18px 0 6px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+p,li{max-width:72ch}
+ul,ol{padding-left:22px;margin:8px 0}
+li{margin:3px 0}
+a{color:var(--blue)}
+code,kbd{font-family:var(--mono);font-size:.86em;background:var(--code-bg);padding:1px 5px;border-radius:4px}
+kbd{border:1px solid var(--rule)}
+pre{font-family:var(--mono);font-size:13px;line-height:1.55;background:var(--code-bg);border:1px solid var(--rule);border-radius:8px;padding:14px 16px;overflow-x:auto;margin:12px 0}
+pre code{background:none;padding:0;font-size:inherit}
+.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--rule);border-radius:8px;background:var(--sheet)}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--rule-soft);vertical-align:top}
+th{font-weight:700;background:var(--rule-soft);font-size:13px;letter-spacing:.03em;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tag{display:inline-block;font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.05em;padding:2px 7px;border-radius:4px;vertical-align:1px;white-space:nowrap}
+.t-mid{background:var(--blue-soft);color:var(--blue)}
+.t-final{background:var(--amber-soft);color:var(--amber)}
+.t-cut{background:var(--red-soft);color:var(--red)}
+.t-ok{background:var(--green-soft);color:var(--green)}
+.t-soon{background:var(--rule-soft);color:var(--muted);border:1px dashed var(--rule)}
+.score{font-family:var(--mono);font-weight:600;color:var(--red);border:1.5px solid var(--red);border-radius:999px;padding:0 7px;font-size:12px;white-space:nowrap}
+.callout{border-left:3px solid var(--red);background:var(--sheet);padding:14px 18px;border-radius:0 8px 8px 0;margin:16px 0}
+.callout.blue{border-left-color:var(--blue)}
+.callout p{margin:4px 0}
+.callout strong{font-family:var(--display)}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:14px 0}
+.panel{background:var(--sheet);border:1px solid var(--rule);border-radius:10px;padding:16px 18px}
+.panel h4{margin-top:0}
+.panel ul{margin:0}
+.feature{background:var(--sheet);border:1px solid var(--rule);border-radius:10px;padding:18px 20px;margin:16px 0}
+.feature > h3{margin-top:0;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.feature .id{font-family:var(--mono);font-size:13px;color:var(--red)}
+dl.kv{display:grid;grid-template-columns:150px minmax(0,1fr);gap:6px 16px;margin:10px 0}
+dl.kv dt{font-weight:700;font-size:14px;color:var(--muted)}
+dl.kv dd{margin:0}
+pre.mermaid{background:var(--sheet);text-align:center}
+.soon-demo{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}
+.soon-demo span{font-size:14px;padding:7px 12px;border-radius:8px;border:1px solid var(--rule);background:var(--sheet)}
+.soon-demo .live{border-color:var(--blue);color:var(--blue);font-weight:600}
+.soon-demo .off{color:var(--muted);opacity:.7;border-style:dashed}
+footer{margin-top:60px;padding-top:18px;border-top:1px solid var(--rule);font-size:13px;color:var(--muted)}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+@media (max-width:980px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:0}
+  nav.toc{position:static;max-height:none;border:1px solid var(--rule);border-radius:10px;padding:14px;background:var(--sheet);margin-bottom:8px}
+  nav.toc ol{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:600px){
+  .grid2{grid-template-columns:minmax(0,1fr)}
+  dl.kv{grid-template-columns:minmax(0,1fr)}
+  nav.toc ol{grid-template-columns:minmax(0,1fr)}
+  body{font-size:16px}
+}
+@media print{nav.toc{display:none}.wrap{grid-template-columns:1fr}}
+</style>
+
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <p>Contents</p>
+  <ol>
+    <li><a href="#verdict">Verdict</a></li>
+    <li><a href="#critique">What the critique changed</a></li>
+    <li><a href="#product">Product definition</a></li>
+    <li><a href="#scope">Scope: mid vs final</a></li>
+    <li><a href="#testdata">Test data plan</a></li>
+    <li><a href="#arch">Architecture</a></li>
+    <li><a href="#repo">Repo layout</a></li>
+    <li><a href="#db">Database schema</a></li>
+    <li><a href="#ai">AI calls and prompts</a></li>
+    <li><a href="#pipeline">Grading pipeline</a></li>
+    <li><a href="#assistant">Assistant chatbot</a></li>
+    <li><a href="#features">Mid features in detail</a></li>
+    <li><a href="#screens">Screens and UI</a></li>
+    <li><a href="#soon">Coming-soon features in the UI</a></li>
+    <li><a href="#quota">Quota budget</a></li>
+    <li><a href="#eval">Evaluation harness</a></li>
+    <li><a href="#privacy">Privacy and ethics</a></li>
+    <li><a href="#final">Final-eval scope</a></li>
+    <li><a href="#demo">Demo and viva</a></li>
+    <li><a href="#synopsis">Synopsis outline</a></li>
+    <li><a href="#sources">Sources</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="top">
+  <div class="eyebrow">Major project · JIIT Noida · Build plan v3 · 22 Sep 2026</div>
+  <h1>Deskwork<span class="mark">.</span> Set the paper, check the papers, clear the desk</h1>
+  <p class="lede">One place for the work teachers still do by hand. Check handwritten answer booklets against an approved rubric, with evidence for every mark and the teacher in charge. Generate assignments and papers from the course's own slides. Ask a built-in assistant for help anywhere in the app. More tools follow.</p>
+  <div class="meta">
+    <span><b>Users</b> Teachers only, any college</span>
+    <span><b>Milestones</b> Mid eval: working prototype · Final eval: finished product</span>
+    <span><b>AI</b> Gemini 3.5 Flash-Lite + 3.1 Flash-Lite, free tier</span>
+    <span><b>Demo subject</b> Whichever subject's material you share</span>
+  </div>
+</header>
+
+<section id="verdict">
+  <h2><span class="n">§1</span>Verdict</h2>
+  <p class="sub">Two research agents reviewed the plan independently. One looked at it from the teacher, product and institution side. The other looked at the engineering and the Gemini API. Their joint conclusion, which I agree with:</p>
+  <div class="callout">
+    <p><strong>The idea is good, as long as the pitch stays honest.</strong> "One AI grades everyone, so it is fair" won't survive a viva. Current research shows vision models change 50 to 64% of criterion marks when the same answer is graded again. They also quietly "fix" student mistakes while reading the handwriting.</p>
+    <p><strong>The version you can defend:</strong> two independent models grade each booklet directly from the scanned image. Every mark cites visible evidence. When the models disagree, the answer goes to the teacher, and the UI makes sure the teacher actually reviews it. Around that sit an assignment generator grounded in the teacher's own slides and an assistant available everywhere. Pitch: <em>"Deskwork does the repetitive work: checking, setting papers, drafting. The teacher stays the examiner and the author."</em></p>
+  </div>
+</section>
+
+<section id="critique">
+  <h2><span class="n">§2</span>What the critique changed</h2>
+  <p class="sub">Each serious criticism, and the decision it led to. These decisions are already applied throughout the plan below.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Criticism</th><th>Evidence</th><th>Decision</th></tr></thead>
+    <tbody>
+      <tr><td>Google may use free-tier Gemini inputs for training and have humans review them. Student scripts are personal data under India's DPDP Act 2023.</td><td>Gemini API terms; DPDP guidance</td><td>The demo uses your own handwritten answers, which you've consented to. Names are masked <b>locally</b> before anything is uploaded, and students get pseudonymous IDs. A config switch moves real use to a paid tier that doesn't train on data. Each exam has a delete button.</td></tr>
+      <tr><td>"Teacher has final say" is weak on its own: teachers who were told a grade came from AI corrected wrong harsh grades 22% less often</td><td>PNAS Nexus 2026, 1,300+ teachers</td><td><b>Forced review UX</b>: the AI mark stays hidden until the scan has been viewed. Accepting a harsh mark needs a one-tap reason. A random 10% spot-check comes before bulk accept.</td></tr>
+      <tr><td>Transcribing first and then grading hides errors: models quietly correct 42 to 66% of student mistakes</td><td>arXiv 2604.22774</td><td>Grade <b>from the image</b>. The transcript is evidence for the teacher, never the grading input.</td></tr>
+      <tr><td>The original call plan needs about 612 calls for 60 students, more than the ~500 per day limit</td><td>Quota math, §15</td><td><b>One call per booklet per model</b>, about 60 per model. Targeted re-grades only for flagged answers.</td></tr>
+      <tr><td>Temperature 0 degrades Gemini 3 models (they can get stuck looping)</td><td>Google's Gemini 3 guide</td><td>Leave temperature at the default. Stability comes from a strict schema, <code>thinking_level</code>, and <b>agreement between two models</b>.</td></tr>
+      <tr><td>Model confidence alone gives "no stable threshold"</td><td>arXiv 2603.13083</td><td>Flag on several signals: model disagreement, low confidence, answer type, cross-page answers, crossed-out work, numeric mismatch, harsh marks.</td></tr>
+      <tr><td>Handwritten code and diagrams grade poorly (QWK 0.09 on handwritten code)</td><td>arXiv 2609.14284, 2608.20521</td><td>These are graded like everything else but <b>always flagged</b> for teacher review, presented as a deliberate design choice.</td></tr>
+      <tr><td>Coarse 0 to 5 criteria double the error</td><td>Same studies</td><td>Each rubric criterion is worth 1 to 3 marks, in steps of 0.5, with accepted alternatives and common errors listed.</td></tr>
+      <tr><td>Mapping pages to questions is the hardest part: answers are out of order, and students add supplementary sheets</td><td>Gradescope needs fixed templates for this</td><td>The model returns a page map, and the teacher can reassign pages. Page-count and blur checks run at upload.</td></tr>
+      <tr><td>The CO printed on a paper doesn't reliably match the question</td><td>Your input</td><td>The printed CO is stored as-is for reference and never used for any logic.</td></tr>
+      <tr><td>CBSE's 2026 on-screen marking scandal: blurred scans, missing pages, mixed-up sheets</td><td>Widely reported</td><td>Capture checks: expected vs actual page count, blur score, and booklet ID on every page. Nothing is published automatically.</td></tr>
+      <tr><td>Too much scope means every feature gets a shallow demo</td><td>Both agents</td><td>Mid eval builds three things properly: checking, generator, basic assistant. Everything else appears in the UI as <b>Coming soon</b> (§14).</td></tr>
+      <tr><td>Hosting: Render's free tier has no background workers, Vercel caps functions at 300 s, and free Supabase projects pause after a week idle</td><td>Provider docs</td><td>Next.js on Vercel, Supabase, and <b>one Python worker</b> for long jobs (a laptop for mid, Cloud Run for final). A daily ping keeps Supabase awake.</td></tr>
+      <tr><td>Two backends (FastAPI plus Next.js) is too much for a small team</td><td>Engineering review</td><td>No REST API in Python. The web app talks to Supabase directly; Python only runs jobs from a queue table. Assistant chat runs in one Next.js route.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="product">
+  <h2><span class="n">§3</span>Product definition</h2>
+  <div class="grid2">
+    <div class="panel">
+      <h4>Who</h4>
+      <ul>
+        <li>Teachers only, at any college. The demo uses JIIT material.</li>
+        <li>Students never log in. Papers and results still reach them through Google Classroom or WhatsApp.</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h4>Problem</h4>
+      <ul>
+        <li>Teachers still do checking, paper setting and drafting by hand.</li>
+        <li>Checking 60 to 200 booklets takes days, different checkers mark differently, and students dispute marks.</li>
+        <li>Writing fresh assignments and papers from slides eats hours every week.</li>
+      </ul>
+    </div>
+  </div>
+  <h3>Modules</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Module</th><th>Mid eval</th><th>Final eval</th></tr></thead>
+    <tbody>
+      <tr><td><b>Exam checking</b> (headline feature)</td><td><span class="tag t-mid">LIVE</span> full flow</td><td>Deeper grading, faster review</td></tr>
+      <tr><td><b>Assignment and paper generator</b></td><td><span class="tag t-mid">LIVE</span> basic</td><td>Sets, Word export, per-question edits</td></tr>
+      <tr><td><b>Assistant</b> (chatbot on every page)</td><td><span class="tag t-mid">LIVE</span> basic tools</td><td>Multi-step actions with confirmation</td></tr>
+      <tr><td>Lesson planner, question bank, feedback writer, rubric library, analytics</td><td><span class="tag t-soon">COMING SOON</span> visible in the UI</td><td>Built as time allows</td></tr>
+    </tbody>
+  </table></div>
+  <h3>What makes it different</h3>
+  <ul>
+    <li><b>Two-model agreement</b> instead of trusting one model, with every mark citing the student's own words.</li>
+    <li><b>Designed against automation bias</b>: the UI makes the teacher actually look before accepting.</li>
+    <li><b>Grounded in the teacher's material</b>: the generator and assistant work from the course's own slides, with page references.</li>
+    <li><b>Built for Indian exams</b>: T1, T2 and End Sem booklets, half marks, supplementary sheets.</li>
+    <li><b>Free to run</b> on the Gemini free tier for a class-sized batch.</li>
+  </ul>
+  <h3>JIIT exam scheme used as the default preset</h3>
+  <p class="sub">Taken from the JIIT B.Tech Academic System document (revised Sep 2025). It sets the default exam types and max marks, and other colleges can edit it.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Component</th><th class="num">Marks</th><th>Duration</th><th>Syllabus</th></tr></thead>
+    <tbody>
+      <tr><td>T1</td><td class="num">20</td><td>1 hour</td><td>Up to T1</td></tr>
+      <tr><td>T2</td><td class="num">20</td><td>1 hour</td><td>T1 to T2</td></tr>
+      <tr><td>End Semester</td><td class="num">35</td><td>2 hours</td><td>Full syllabus</td></tr>
+      <tr><td>Teacher Assessment (TA)</td><td class="num">25</td><td>Continuous</td><td>Assignments, quizzes, etc.</td></tr>
+    </tbody>
+  </table></div>
+  <p>Marked scripts are shown to students, so an evidence view for each question directly helps on script-showing day. Grading is relative, so the results screen shows the marks distribution but does not assign grades.</p>
+</section>
+
+<section id="scope">
+  <h2><span class="n">§4</span>Scope: mid vs final</h2>
+  <p class="sub">Rule: at mid eval, each live flow works end to end on real handwritten scripts. <span class="tag t-mid">MID</span> features are detailed in §12. <span class="tag t-final">FINAL</span> features are scoped briefly in §19 and appear in the prototype as <span class="tag t-soon">COMING SOON</span>.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Area</th><th>Mid eval (build fully)</th><th>Final eval (scope only)</th></tr></thead>
+    <tbody>
+      <tr><td>Accounts and courses</td><td>Email login, courses, student CSV, slide upload with text extraction by unit</td><td>TA access, exam scheme presets for other colleges, course archive</td></tr>
+      <tr><td>Exam setup</td><td>Upload the question paper; AI extracts questions, marks, answer type and Bloom level; teacher edits</td><td>Question bank reuse across exams</td></tr>
+      <tr><td>Answer key and rubric</td><td>Typed <b>or handwritten</b> key becomes a draft rubric; teacher approves a frozen version</td><td>Rubric edits re-apply to already graded scripts</td></tr>
+      <tr><td>Script capture</td><td>PDF or image upload per booklet, page rendering, local name mask, page-count and blur checks</td><td>Phone batch capture with deskew, QR cover sheet, drag to fix page order</td></tr>
+      <tr><td>Grading</td><td>One call per booklet on two models, all answer types, criterion scores with evidence, flags, numeric tolerance check, cache, throttle</td><td>Targeted per-question re-grade, SymPy step checks, test runs for typed code, diagram label checklists</td></tr>
+      <tr><td>Review</td><td>Flag queue, scan and evidence side by side, forced review, edit with reason, audit log, keyboard shortcuts</td><td>Question-wise grading across all booklets with answer grouping, script-showing-day view</td></tr>
+      <tr><td>Results</td><td>Marks table, marks distribution, per-question stats, Excel export</td><td>Weak-topic analytics, comparison across exams</td></tr>
+      <tr><td>Generator</td><td>Pick units, question types, count and marks; get questions, answer key, rubric and Bloom level; edit; printable PDF; convert to an exam in one click</td><td>Sets A/B/C, college-format Word file, regenerate a single question, chat tweaks</td></tr>
+      <tr><td>Assistant</td><td>Chat panel on every page: answers from slides with page citations, questions about results, drafts short text, opens pages, pre-fills the generator</td><td>Multi-step actions with confirmation (create exam, run generator, bulk operations), explains a student's marks, remembers preferences</td></tr>
+      <tr><td>Coming-soon placeholders</td><td>Greyed-out cards and buttons where future features will live (§14)</td><td>Each one becomes live when built by flipping a flag</td></tr>
+      <tr><td>Evaluation</td><td>Harness on your answers plus team-written booklets with planted errors</td><td>A study of 50+ booklets across all four answer types</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="testdata">
+  <h2><span class="n">§5</span>Test data plan</h2>
+  <p class="sub">You'll provide one of each item below for one subject. The handwritten answers are your own, with full consent, and they're also what the viva demo uses. Each item has a defined job in the pipeline and in the evaluation.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>You provide</th><th>Used for</th><th>Pipeline step</th></tr></thead>
+    <tbody>
+      <tr><td>Previous-year question paper (PDF)</td><td>Question extraction: labels, sub-parts, marks, type</td><td>C1 extract_paper</td></tr>
+      <tr><td>Typed answer key for that paper</td><td>Draft rubric from a typed key</td><td>C2 build_rubric (typed)</td></tr>
+      <tr><td>Handwritten answer key example</td><td>Draft rubric from handwriting (image input)</td><td>C2 build_rubric (handwritten)</td></tr>
+      <tr><td>Subject PDF slides</td><td>Text by unit; grounding for the generator and the assistant</td><td>extract_material, C5, C6</td></tr>
+      <tr><td>A college assignment</td><td>Second exam type (kind = ASSIGNMENT); style reference for the generator</td><td>C1, C5 style sample</td></tr>
+      <tr><td>Your handwritten answers</td><td>End-to-end grading test and the live demo</td><td>ingest_scripts, C3/C4 grade_booklet</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Make it a real test set</h3>
+  <ul>
+    <li><b>Human marks:</b> have a teacher (or a teammate, using the approved rubric) mark your answers. Without human marks there is no accuracy number.</li>
+    <li><b>More booklets:</b> each team member hand-writes 3 to 5 answer booklets for the same paper, with <b>deliberately planted errors</b> recorded in a sheet. Plant a wrong step, a wrong unit, a missing definition, a crossed-out attempt, and an answer continued on a later page. Aim for 12 to 20 booklets.</li>
+    <li><b>Human baseline:</b> two team members mark the extra booklets blind with the approved rubric. The AI-vs-human gap is then compared with the human-vs-human gap.</li>
+    <li><b>Cover all four types:</b> include at least one theory, one numerical, one code and one diagram question. If the provided paper lacks a type, add a question to the extra booklets.</li>
+  </ul>
+<pre><code>testdata/
+  subject-xyz/
+    paper_pyq.pdf
+    key_typed.pdf
+    key_handwritten.pdf
+    slides/unit1.pdf ... unitN.pdf
+    assignment_1.pdf
+    scripts/                     # one PDF per booklet, file name = anon id
+      S001.pdf  S002.pdf ...
+    labels/
+      human_marks.csv            # anon_id, question, criterion, marks, marker
+      planted_errors.csv         # anon_id, question, error_type, note
+      transcripts_gold/          # 5 pages typed by hand, for CER</code></pre>
+  <p>Keep scripts out of git (<code>.gitignore</code>) and out of any public repo.</p>
+</section>
+
+<section id="arch">
+  <h2><span class="n">§6</span>Architecture</h2>
+  <p class="sub">One web app, one database, one Python worker. The browser never calls Gemini directly. Long jobs run in the worker, and assistant chat runs in one server-side Next.js route.</p>
+<pre class="mermaid">
+flowchart LR
+  T[Teacher browser] -->|Next.js 15 on Vercel| W[Web app]
+  W -->|Auth, SQL, RLS| DB[(Supabase Postgres)]
+  W -->|signed uploads| ST[(Supabase Storage)]
+  W -->|insert row| J[jobs table]
+  W -->|/api/assistant, streaming| G1
+  J -->|poll, SKIP LOCKED| PW[Python worker]
+  PW -->|PyMuPDF, Pillow| ST
+  PW -->|throttled, cached| G1[Gemini 3.5 Flash-Lite]
+  PW -->|second grader| G2[Gemini 3.1 Flash-Lite]
+  PW -->|results| DB
+  DB -->|Realtime progress| W
+</pre>
+  <div class="tbl"><table>
+    <thead><tr><th>Layer</th><th>Choice</th><th>Reason</th></tr></thead>
+    <tbody>
+      <tr><td>Web</td><td>Next.js 15 App Router, TypeScript, Tailwind, shadcn/ui, TanStack Table, Recharts, <code>@google/genai</code> (assistant route only)</td><td>The team already knows it; shadcn gives a clean, consistent dashboard</td></tr>
+      <tr><td>Data</td><td>Supabase: Postgres with RLS, Auth (email), Storage, Realtime, full-text search</td><td>One service covers auth, data, files, live progress and slide search</td></tr>
+      <tr><td>Worker</td><td>Python 3.12, <code>google-genai</code>, PyMuPDF, Pillow, OpenCV (blur check), Pydantic, openpyxl, psycopg</td><td>The PDF, image and numeric libraries are best in Python</td></tr>
+      <tr><td>Queue</td><td><code>jobs</code> table with <code>FOR UPDATE SKIP LOCKED</code></td><td>No extra infrastructure, and jobs can be restarted</td></tr>
+      <tr><td>Hosting</td><td>Vercel (web), Supabase free tier; worker on an always-on laptop for mid and a Docker image on Cloud Run for final</td><td>Free options that support long-running jobs</td></tr>
+      <tr><td>Feature flags</td><td><code>lib/features.ts</code>: one list of every feature and its state (live or soon)</td><td>Drives every coming-soon placeholder from one file</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="repo">
+  <h2><span class="n">§7</span>Repo layout</h2>
+<pre><code>deskwork/
+  apps/web/                      Next.js app
+    app/(auth)/login/
+    app/(app)/dashboard/
+    app/(app)/courses/[courseId]/            exams, materials, students tabs
+    app/(app)/courses/[courseId]/exams/new/  setup wizard
+    app/(app)/exams/[examId]/                overview + progress
+    app/(app)/exams/[examId]/rubric/
+    app/(app)/exams/[examId]/scripts/
+    app/(app)/exams/[examId]/review/
+    app/(app)/exams/[examId]/results/
+    app/(app)/courses/[courseId]/generate/
+    app/(app)/soon/[feature]/                shared coming-soon page for sidebar items
+    app/api/assistant/route.ts               streaming chat + tool calls
+    lib/supabase/  lib/jobs.ts  lib/features.ts  lib/assistant/tools.ts
+    lib/types.ts                             generated from the DB
+    components/ui/ (shadcn)  components/review/  components/rubric/
+    components/assistant/  components/coming-soon.tsx
+  worker/
+    deskwork_worker/
+      main.py                    job loop
+      jobs/extract_material.py  extract_paper.py  build_rubric.py
+      jobs/ingest_scripts.py    grade_booklet.py  finalize_flags.py
+      jobs/generate_set.py      export_results.py
+      ai/client.py               throttle, retry, fallback, cache, usage
+      ai/schemas.py              Pydantic models = JSON schemas
+      ai/prompts/*.md            versioned prompt files
+      pdf.py  mask.py  quality.py  numeric.py
+    pyproject.toml  Dockerfile
+  supabase/migrations/0001_init.sql
+  eval/harness.py  eval/metrics.py  eval/reports/
+  testdata/  (gitignored)
+  .env.example                   GEMINI_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ...</code></pre>
+</section>
+
+<section id="db">
+  <h2><span class="n">§8</span>Database schema</h2>
+  <p class="sub">The full schema for the mid milestone. Every table holding course data gets an RLS policy that lets only the course owner see it. The worker uses the service role key.</p>
+<pre><code>-- supabase/migrations/0001_init.sql
+create extension if not exists pgcrypto;
+
+create table profiles (
+  id uuid primary key references auth.users on delete cascade,
+  full_name text, institution text, created_at timestamptz default now());
+
+create table exam_schemes (                 -- JIIT preset + custom
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid references profiles, name text not null,
+  components jsonb not null);              -- [{"kind":"T1","max":20},...]
+
+create table courses (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid not null references profiles on delete cascade,
+  code text not null, name text not null, semester text, section text,
+  scheme_id uuid references exam_schemes,
+  created_at timestamptz default now());
+
+create table materials (
+  id uuid primary key default gen_random_uuid(),
+  course_id uuid not null references courses on delete cascade,
+  kind text not null check (kind in ('slides','notes','assignment','pyq','other')),
+  title text not null, unit text, storage_path text not null,
+  status text not null default 'uploaded',   -- uploaded|extracted|error
+  created_at timestamptz default now());
+
+create table material_pages (
+  id uuid primary key default gen_random_uuid(),
+  material_id uuid not null references materials on delete cascade,
+  page_no int not null, text text, topics text[],
+  tsv tsvector generated always as (to_tsvector('english', coalesce(text,''))) stored,
+  unique (material_id, page_no));
+create index on material_pages using gin (tsv);   -- assistant slide search
+
+create table students (
+  id uuid primary key default gen_random_uuid(),
+  course_id uuid not null references courses on delete cascade,
+  anon_id text not null,                     -- S001, shown everywhere by default
+  roll_no text, name text,                   -- stay in our DB, never sent to AI
+  unique (course_id, anon_id));
+
+create table exams (
+  id uuid primary key default gen_random_uuid(),
+  course_id uuid not null references courses on delete cascade,
+  title text not null,
+  kind text not null check (kind in ('T1','T2','END_SEM','ASSIGNMENT','QUIZ','OTHER')),
+  max_marks numeric, paper_path text,
+  mask_region jsonb,                         -- {"page":1,"x":..,"y":..,"w":..,"h":..} normalized 0..1
+  expected_pages int,
+  status text not null default 'draft',      -- draft|rubric_ready|grading|review|final
+  created_at timestamptz default now());
+
+create table questions (
+  id uuid primary key default gen_random_uuid(),
+  exam_id uuid not null references exams on delete cascade,
+  label text not null, ord int not null,     -- '1', '2a', '2b'
+  text text not null, max_marks numeric not null,
+  answer_type text not null check (answer_type in ('theory','numeric','code','diagram','mcq')),
+  bloom text check (bloom in ('remember','understand','apply','analyze','evaluate','create')),
+  printed_co text,                           -- as printed on the paper; reference only, never used in logic
+  unique (exam_id, label));
+
+create table rubric_versions (
+  id uuid primary key default gen_random_uuid(),
+  exam_id uuid not null references exams on delete cascade,
+  version int not null,
+  status text not null default 'draft' check (status in ('draft','approved','superseded')),
+  source text not null check (source in ('typed_key','handwritten_key','manual','generated')),
+  key_path text, approved_at timestamptz,
+  unique (exam_id, version));
+
+create table rubric_items (
+  id uuid primary key default gen_random_uuid(),
+  rubric_version_id uuid not null references rubric_versions on delete cascade,
+  question_id uuid not null references questions on delete cascade,
+  criterion_key text not null,               -- 'q2a.c1'
+  description text not null,
+  marks numeric not null check (marks > 0 and marks <= 3 and marks * 2 = floor(marks * 2)),
+  accept_alternatives text[] default '{}', common_errors text[] default '{}',
+  final_answer text, tolerance_pct numeric, units text, ord int not null);
+
+create table submissions (
+  id uuid primary key default gen_random_uuid(),
+  exam_id uuid not null references exams on delete cascade,
+  student_id uuid references students,
+  storage_path text not null, page_count int,
+  quality jsonb,                             -- {"page_count_ok":true,"blurry_pages":[4]}
+  status text not null default 'uploaded',   -- uploaded|ready|grading|graded|reviewed|error
+  created_at timestamptz default now());
+
+create table submission_pages (
+  id uuid primary key default gen_random_uuid(),
+  submission_id uuid not null references submissions on delete cascade,
+  page_no int not null, image_path text not null,
+  blur_score numeric, masked boolean default false,
+  unique (submission_id, page_no));
+
+create table grading_runs (
+  id uuid primary key default gen_random_uuid(),
+  submission_id uuid not null references submissions on delete cascade,
+  rubric_version_id uuid not null references rubric_versions,
+  grader text not null check (grader in ('A','B','regrade')),
+  model text not null, prompt_version text not null, cache_key text not null,
+  raw jsonb, input_tokens int, output_tokens int, latency_ms int,
+  status text not null default 'ok', error text, created_at timestamptz default now());
+
+create table answer_grades (                 -- one per question per run
+  id uuid primary key default gen_random_uuid(),
+  run_id uuid not null references grading_runs on delete cascade,
+  question_id uuid not null references questions,
+  pages int[], transcript text, final_answer text,
+  flags text[] default '{}', confidence numeric, total numeric);
+
+create table criterion_scores (
+  id uuid primary key default gen_random_uuid(),
+  answer_grade_id uuid not null references answer_grades on delete cascade,
+  rubric_item_id uuid not null references rubric_items,
+  points numeric not null, evidence text);
+
+create table final_marks (                   -- what the teacher signs off
+  id uuid primary key default gen_random_uuid(),
+  submission_id uuid not null references submissions on delete cascade,
+  question_id uuid not null references questions,
+  ai_marks numeric,                          -- agreed suggestion
+  marks numeric,                             -- null until reviewed or bulk-accepted
+  criteria jsonb,                            -- [{"rubric_item_id":..,"points":..}]
+  review_status text not null default 'pending'
+    check (review_status in ('pending','flagged','accepted','edited','spot_checked')),
+  flag_reasons text[] default '{}',
+  reviewed_by uuid references profiles, reviewed_at timestamptz,
+  unique (submission_id, question_id));
+
+create table audit_log (
+  id bigserial primary key,
+  course_id uuid references courses, entity text not null, entity_id uuid not null,
+  action text not null, before jsonb, after jsonb, reason text,
+  actor uuid, at timestamptz default now());
+
+create table generated_sets (
+  id uuid primary key default gen_random_uuid(),
+  course_id uuid not null references courses on delete cascade,
+  title text, config jsonb not null, content jsonb, status text default 'queued',
+  created_at timestamptz default now());
+
+create table chat_threads (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid not null references profiles on delete cascade,
+  course_id uuid references courses on delete set null,
+  title text, created_at timestamptz default now());
+
+create table chat_messages (
+  id bigserial primary key,
+  thread_id uuid not null references chat_threads on delete cascade,
+  role text not null check (role in ('user','assistant','tool')),
+  content jsonb not null,                    -- text, tool calls, tool results, citations
+  created_at timestamptz default now());
+
+create table jobs (
+  id bigserial primary key,
+  kind text not null, payload jsonb not null,
+  status text not null default 'queued' check (status in ('queued','running','done','error')),
+  attempts int not null default 0, progress jsonb, error text,
+  run_after timestamptz default now(), locked_at timestamptz,
+  created_at timestamptz default now());
+create index on jobs (status, run_after);
+
+create table ai_cache (
+  cache_key text primary key,                -- sha256(model|prompt_version|rubric_version|image hashes)
+  model text, response jsonb not null, created_at timestamptz default now());
+
+create table ai_usage_daily (
+  day date not null, model text not null, source text not null,   -- worker|assistant
+  calls int default 0, tokens int default 0,
+  primary key (day, model, source));</code></pre>
+</section>
+
+<section id="ai">
+  <h2><span class="n">§9</span>AI calls and prompts</h2>
+  <p class="sub">There are six call types. C1 to C5 run in the worker through <code>ai/client.py</code>, which throttles, retries, falls back to the other model, caches, and logs usage. C6 is the assistant route. Prompts live in versioned files, so the cache key changes whenever a prompt changes.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Call</th><th>Input</th><th>Output</th><th>Model / thinking</th><th class="num">Calls</th></tr></thead>
+    <tbody>
+      <tr><td>C1 extract_paper</td><td>Question paper PDF</td><td>Questions: label, text, marks, type, Bloom, printed CO (copied as-is)</td><td>3.5 / low</td><td class="num">1 per exam</td></tr>
+      <tr><td>C2 build_rubric</td><td>Questions plus typed key text <i>or</i> handwritten key page images</td><td>Criteria per question (0.5 to 3 marks each), final answers, alternatives, and the key transcript</td><td>3.5 / medium</td><td class="num">1 per exam</td></tr>
+      <tr><td>C3 grade_booklet (A)</td><td>Rubric JSON plus every page image of one booklet</td><td>Page map, per-question transcript, criterion points with evidence, flags, confidence</td><td>3.5 / medium</td><td class="num">1 per booklet</td></tr>
+      <tr><td>C4 grade_booklet (B)</td><td>Same</td><td>Same</td><td>3.1 / medium</td><td class="num">1 per booklet</td></tr>
+      <tr><td>C5 generate_set</td><td>Full text of the selected units, config, style sample</td><td>Questions plus answer key, rubric, Bloom level and source pages</td><td>3.5 / medium</td><td class="num">1 per set</td></tr>
+      <tr><td>C6 assistant</td><td>Conversation, page context, tool results</td><td>Streamed reply, tool calls</td><td>3.5 / low</td><td class="num">1 to 3 per message</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Model settings (checked against the Gemini docs by the research agent)</h3>
+  <ul>
+    <li>Model IDs: <code>gemini-3.5-flash-lite</code> and <code>gemini-3.1-flash-lite</code>. Both take 1M input tokens and return up to 64k.</li>
+    <li><b>Do not set temperature, top_p or top_k.</b> Google recommends the defaults for Gemini 3; a low temperature can make the model loop.</li>
+    <li><code>thinking_level</code>: minimal is the Flash-Lite default. Use <code>low</code> for extraction and the assistant, and <code>medium</code> for grading and rubrics. Pick the final values with the harness.</li>
+    <li><code>media_resolution</code>: <code>high</code> (about 1,120 tokens per image) for handwriting. Try <code>medium</code> in the harness to save tokens.</li>
+    <li>Use structured output with a JSON Schema generated from Pydantic, and keep schemas shallow.</li>
+    <li>Don't store slides in the Files API, because files expire after 48 hours. Context caching isn't on the free tier either, so send extracted text instead.</li>
+  </ul>
+<pre><code># worker/deskwork_worker/ai/client.py  (sketch; confirm field names against current google-genai docs)
+from google import genai
+from google.genai import types
+
+client = genai.Client()  # reads GEMINI_API_KEY
+
+def call_json(model, system, parts, schema_model, thinking="medium", media="high"):
+    key = cache_key(model, system, parts, schema_model)
+    if (hit := cache_get(key)): return hit
+    bucket.acquire(model, est_tokens(parts))          # RPM + TPM token bucket per model
+    resp = with_retry(lambda: client.models.generate_content(
+        model=model,
+        contents=parts,
+        config=types.GenerateContentConfig(
+            system_instruction=system,
+            response_mime_type="application/json",
+            response_json_schema=schema_model.model_json_schema(),
+            thinking_config=types.ThinkingConfig(thinking_level=thinking),
+            media_resolution=f"MEDIA_RESOLUTION_{media.upper()}",
+        )))                                           # retry 429/503: exp backoff + jitter, max 5
+    data = schema_model.model_validate_json(resp.text)   # one re-ask on validation failure
+    cache_put(key, model, data); usage_inc(model, "worker", resp.usage_metadata)
+    return data
+# generate_content is the long-supported path; the newer Interactions API also works.
+# If using Interactions, check whether it stores data server-side by default and turn that off.</code></pre>
+
+  <h3>Schemas (Pydantic models, converted to JSON schema)</h3>
+<pre><code>class RubricCriterion(BaseModel):
+    key: str                      # "q2a.c1"
+    description: str
+    marks: float                  # 0.5 to 3, steps of 0.5
+    accept_alternatives: list[str] = []
+    common_errors: list[str] = []
+
+class RubricQuestion(BaseModel):
+    label: str
+    criteria: list[RubricCriterion]
+    final_answer: str | None = None
+    tolerance_pct: float | None = None
+    units: str | None = None
+
+class RubricDraft(BaseModel):
+    key_transcript: str           # what the model read from the key (teacher checks this)
+    questions: list[RubricQuestion]
+
+class PageInfo(BaseModel):
+    page: int
+    questions: list[str]
+    legible: Literal["good", "partial", "poor"]
+
+class CriterionScore(BaseModel):
+    key: str
+    evidence: str                 # quote or describe the student's own work FIRST
+    points: float                 # clamped in code to [0, marks], rounded to 0.5
+
+Flag = Literal["cross_page","crossed_out","diagram","code","illegible",
+               "unanswered","alt_method","possible_misread"]
+
+class AnswerGrade(BaseModel):
+    label: str
+    pages: list[int]
+    transcript: str               # verbatim, keep errors, [crossed], [illegible]
+    final_answer: str | None = None
+    criteria: list[CriterionScore]
+    flags: list[Flag] = []
+    confidence: float             # 0 to 1
+
+class BookletGrade(BaseModel):
+    pages: list[PageInfo]
+    answers: list[AnswerGrade]</code></pre>
+
+  <h3>Grading system prompt (prompts/grade_booklet.v1.md)</h3>
+<pre><code>You are an exam checker applying an approved rubric to one student's scanned answer booklet.
+Pages are labelled "PAGE n". The student is anonymous.
+
+Rules:
+1. Grade only what is visibly written. Never assume what the student meant.
+2. Do NOT correct the student's errors, even small ones, in the transcript or in your judgement.
+   A wrong sign, wrong unit or wrong step stays wrong.
+3. Ignore handwriting neatness, grammar, spelling and answer length. Judge content only.
+4. Crossed-out work is withdrawn and earns nothing, unless nothing else is written for that part.
+5. Answers may be out of order or continue on later pages. Use question labels written by the
+   student to build the page map. If a label is missing, infer from content and add "possible_misread".
+6. For each rubric criterion: first write evidence (quote or describe the student's work),
+   then award points from 0 to that criterion's marks in steps of 0.5.
+7. Accept any method listed in accept_alternatives, and any other correct method (flag "alt_method").
+8. If a question is not attempted, return it with 0 points and flag "unanswered".
+9. Always flag "diagram" for drawings and "code" for program code.
+10. confidence = how sure you are the awarded points match what an expert examiner would give.
+
+Return JSON matching the schema. Include every question in the rubric.</code></pre>
+  <p>Parts are sent in this order: the system prompt, then the approved rubric JSON (with question text, max marks and answer type), then each page as the text <code>"PAGE n"</code> followed by its image.</p>
+
+  <h3>Rules enforced in code, never trusted from the model</h3>
+  <ul>
+    <li>Clamp each criterion to <code>[0, marks]</code>, round to 0.5, and recompute the question totals and booklet total.</li>
+    <li>Reject criterion keys that aren't in the rubric. A missing criterion counts as 0 and adds a flag.</li>
+    <li>Numeric questions: parse <code>final_answer</code> and compare it with the key within <code>tolerance_pct</code>. If they don't match but the model awarded the final-answer criterion, add the flag <code>numeric_mismatch</code>.</li>
+  </ul>
+</section>
+
+<section id="pipeline">
+  <h2><span class="n">§10</span>Grading pipeline, step by step</h2>
+<pre class="mermaid">
+flowchart TD
+  A[Teacher uploads paper] --> B[C1 extract questions]
+  B --> C[Teacher edits questions, marks, type]
+  C --> D[Upload typed or handwritten key]
+  D --> E[C2 draft rubric + key transcript]
+  E --> F[Teacher edits and approves: frozen rubric version]
+  F --> G[Upload booklets]
+  G --> H[Render pages, mask name locally, page count + blur check]
+  H --> I[C3 grader A: 3.5 Flash-Lite, whole booklet]
+  H --> J[C4 grader B: 3.1 Flash-Lite, whole booklet]
+  I --> K[Compare, validate, flag]
+  J --> K
+  K --> L[Review queue: flagged first]
+  L --> M[Teacher reviews, spot-checks 10%, bulk-accepts rest]
+  M --> N[Final marks, audit log, Excel]
+</pre>
+  <h3>Flag rules (finalize_flags job)</h3>
+  <p>A question in a booklet is <b>flagged</b> if any of these is true:</p>
+  <ul>
+    <li>Graders A and B differ by 1 mark or more on any criterion, or by 1.5 or more on the question total.</li>
+    <li>Either grader's confidence is below 0.7.</li>
+    <li>The answer type is code or diagram.</li>
+    <li>It carries any of these flags: <code>cross_page, crossed_out, illegible, possible_misread, alt_method, numeric_mismatch</code>.</li>
+    <li>A page it sits on scored below the blur threshold, or the booklet failed the page-count check.</li>
+    <li>The AI awarded less than 40% of max marks. Harsh AI errors are the ones teachers miss most.</li>
+  </ul>
+  <p>For unflagged questions, <code>ai_marks</code> is the mean of A and B rounded to 0.5, and the status is <code>pending</code>. Flagged questions get the status <code>flagged</code>, and both graders' views are stored for the review screen.</p>
+
+  <h3>Worker loop</h3>
+<pre><code># worker/deskwork_worker/main.py
+CLAIM = """
+update jobs set status='running', locked_at=now(), attempts=attempts+1
+where id = (select id from jobs where status='queued' and run_after<=now()
+            order by id for update skip locked limit 1)
+returning *;"""
+while True:
+    job = db.fetchone(CLAIM)
+    if not job: sleep(2); continue
+    try:
+        HANDLERS[job.kind](job.payload, progress=lambda p: set_progress(job.id, p))
+        mark_done(job.id)
+    except RateLimited as e:
+        requeue(job.id, delay=e.retry_after)       # no attempt penalty
+    except Exception as e:
+        fail_or_retry(job.id, e, max_attempts=3)
+# Job kinds: extract_material, extract_paper, build_rubric, ingest_scripts,
+#            grade_booklet, finalize_flags, generate_set, export_results
+# Every handler is idempotent: re-running it overwrites its own rows.</code></pre>
+</section>
+
+<section id="assistant">
+  <h2><span class="n">§11</span>Assistant chatbot</h2>
+  <p class="sub">A chat panel that opens from any page (<kbd>Cmd</kbd> + <kbd>J</kbd>, or the button at the bottom right). It knows which course or exam the teacher is looking at. It works through a small set of tools, never by querying the database freely.</p>
+  <h3>How it works</h3>
+  <ul>
+    <li><b>Route:</b> <code>app/api/assistant/route.ts</code> streams replies using <code>@google/genai</code> with function calling. The Gemini key stays on the server.</li>
+    <li><b>Context sent with each message:</b> the current route, the course or exam id and title, and the last 10 messages of the thread.</li>
+    <li><b>Tools run with the teacher's own Supabase session</b>, so RLS limits them to that teacher's data.</li>
+    <li><b>Read-only in the prototype.</b> Anything that would change data returns a link or a pre-filled form, and the teacher clicks the final button.</li>
+    <li><b>Limits:</b> at most 2 tool rounds per message, so each message costs 1 to 3 calls. Usage is logged in <code>ai_usage_daily</code> with <code>source='assistant'</code>.</li>
+    <li><b>Citations:</b> answers drawn from slides show chips like "Unit 2 slides, p. 14" that open the page.</li>
+    <li><b>Privacy:</b> results tools return anon IDs only. Names are never sent to the model.</li>
+  </ul>
+  <h3>Prototype tools <span class="tag t-mid">MID</span></h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Tool</th><th>What it does</th><th>Example request</th></tr></thead>
+    <tbody>
+      <tr><td><code>search_materials(course_id, query)</code></td><td>Full-text search over slide pages (Postgres <code>tsvector</code>); returns the top 6 pages' text with references</td><td>"Explain 3NF the way my Unit 2 slides do"</td></tr>
+      <tr><td><code>get_exam_summary(exam_id)</code></td><td>Average, highest, lowest, distribution, per-question averages, flag counts</td><td>"How did the class do in T2?"</td></tr>
+      <tr><td><code>query_marks(exam_id, question?, below?, above?, status?)</code></td><td>Filtered marks rows (anon IDs)</td><td>"Who scored under 8?", "Which question had the lowest average?"</td></tr>
+      <tr><td><code>list_flagged(exam_id)</code></td><td>Flagged answers grouped by reason</td><td>"What's left for me to review?"</td></tr>
+      <tr><td><code>open_page(target)</code></td><td>Returns a route the UI navigates to after a click</td><td>"Take me to the review screen for T2"</td></tr>
+      <tr><td><code>prefill_generator(course_id, config)</code></td><td>Opens the generator with the form already filled in; the teacher presses Generate</td><td>"Make a 10-mark assignment on Unit 3 with 2 numericals"</td></tr>
+    </tbody>
+  </table></div>
+  <p>With no tool at all, it also drafts short text: a WhatsApp announcement, viva questions on a topic, or a feedback note.</p>
+  <h3>Assistant UI</h3>
+  <ul>
+    <li>A side panel, 400 px wide, that keeps its thread per course. There's a thread list and a "New chat" button.</li>
+    <li>When the chat is empty, it shows four suggestion chips that fit the current page. Advanced chips appear greyed out with "(Coming soon)", for example "Create an exam from this paper".</li>
+    <li>Tool activity is shown inline ("Searching Unit 2 slides…") before the answer streams in.</li>
+    <li>Links and pre-filled forms appear as small action cards inside the chat.</li>
+  </ul>
+  <h3>Final version <span class="tag t-final">FINAL</span></h3>
+  <p>Scope only: it takes actions that change data, but only after the teacher confirms a card in the chat. Examples: create an exam from an uploaded paper, run the generator and turn the result into an exam, bulk-accept the reviewed items. It can also explain one student's marks question by question, compare two exams, carry out multi-step requests, and remember the teacher's preferences (difficulty, format).</p>
+</section>
+
+<section id="features">
+  <h2><span class="n">§12</span>Mid-eval features in detail</h2>
+  <p class="sub">Each feature lists what the teacher does, what the system does, and when it counts as done.</p>
+
+  <div class="feature">
+    <h3><span class="id">M1</span>Accounts and course workspace <span class="tag t-mid">MID</span></h3>
+    <dl class="kv">
+      <dt>Teacher does</dt><dd>Signs up with email. Creates a course (code, name, semester, section; exam scheme defaults to the JIIT preset). Imports a students CSV (roll_no, name). Uploads slide PDFs and tags each one with a unit.</dd>
+      <dt>System does</dt><dd>Generates anon IDs (S001 and so on). <code>extract_material</code> pulls the text of each page with PyMuPDF and stores it with a search index.</dd>
+      <dt>Done when</dt><dd>A course shows its materials with page counts and extraction status, plus the student list. RLS stops one teacher from seeing another teacher's course.</dd>
+    </dl>
+  </div>
+
+  <div class="feature">
+    <h3><span class="id">M2</span>Exam setup from the question paper <span class="tag t-mid">MID</span></h3>
+    <dl class="kv">
+      <dt>Teacher does</dt><dd>Creates a new exam and picks its kind (T1, T2, End Sem or Assignment). Uploads the question paper PDF.</dd>
+      <dt>System does</dt><dd>C1 extracts questions and sub-parts with their marks, answer type and Bloom level. Any CO printed on the paper is copied into <code>printed_co</code> for reference only. The system checks that the marks add up to the exam's maximum.</dd>
+      <dt>UI</dt><dd>An editable question table (label, text, marks, type, Bloom), with a warning banner if the marks don't add up.</dd>
+      <dt>Done when</dt><dd>Both the provided previous-year paper and the assignment extract correctly after at most small edits.</dd>
+    </dl>
+  </div>
+
+  <div class="feature">
+    <h3><span class="id">M3</span>Answer key to approved rubric <span class="tag t-mid">MID</span></h3>
+    <dl class="kv">
+      <dt>Teacher does</dt><dd>Uploads a typed key (PDF or text) or photos of a handwritten key. Reviews the draft rubric, edits criteria, adds alternatives, and clicks Approve.</dd>
+      <dt>System does</dt><dd>C2 returns the key transcript and criteria worth 0.5 to 3 marks each, and checks that each question's criteria add up to its marks. Approving freezes a new <code>rubric_version</code>, and grading always points to a specific version.</dd>
+      <dt>UI</dt><dd>A split view for each question: the key (image or text) on the left, and the transcript with the rubric editor on the right. The key transcript is shown so the teacher can catch misreadings of their own handwriting.</dd>
+      <dt>Done when</dt><dd>Both the typed key and the handwritten key produce usable rubrics for the test paper.</dd>
+    </dl>
+  </div>
+
+  <div class="feature">
+    <h3><span class="id">M4</span>Script upload and capture checks <span class="tag t-mid">MID</span></h3>
+    <dl class="kv">
+      <dt>Teacher does</dt><dd>Drags in booklet PDFs, or one folder of phone photos per booklet. Draws the name and roll-number box once on a sample first page. Matches each file to a student (automatic when files are named by anon ID or roll number).</dd>
+      <dt>System does</dt><dd><code>ingest_scripts</code> renders each page as a grayscale JPEG (about 170 DPI, long side at most 2000 px) and paints over the mask region. It also computes a blur score (variance of Laplacian) and compares the page count with the expected number of pages.</dd>
+      <dt>UI</dt><dd>A grid of booklets with thumbnails and status chips such as "Ready", "Blurry page 4" or "9 of 12 pages". A <span class="tag t-soon">Capture with phone (Coming soon)</span> button sits beside the upload area.</dd>
+      <dt>Done when</dt><dd>No image leaves the worker without the mask applied, and bad scans are visible before grading starts.</dd>
+    </dl>
+  </div>
+
+  <div class="feature">
+    <h3><span class="id">M5</span>Dual-model grading <span class="tag t-mid">MID</span></h3>
+    <dl class="kv">
+      <dt>Teacher does</dt><dd>Clicks "Check all booklets".</dd>
+      <dt>System does</dt><dd>Queues one <code>grade_booklet</code> job per booklet for each grader, and throttles to about 8 calls per minute per model. Results are cached by image hashes, rubric version, prompt version and model. <code>finalize_flags</code> then applies the rules in §10.</dd>
+      <dt>UI</dt><dd>Live progress through Supabase Realtime, for example "Checking S014 · 23 of 40 booklets · 6 flagged so far". Never a blank spinner.</dd>
+      <dt>Done when</dt><dd>A batch of 40 booklets finishes in one sitting within quota, and re-running it costs zero calls.</dd>
+    </dl>
+  </div>
+
+  <div class="feature">
+    <h3><span class="id">M6</span>Review with forced attention <span class="tag t-mid">MID</span></h3>
+    <dl class="kv">
+      <dt>Teacher does</dt><dd>Works through the flagged queue, then spot-checks a random 10% of unflagged answers, then bulk-accepts the rest.</dd>
+      <dt>System does</dt><dd>For flagged items, the AI mark stays hidden until the scan region has been on screen, and <kbd>Space</kbd> reveals it. Accepting a harsh mark (under 40%) needs a one-tap reason. Bulk accept stays disabled until the spot-check sample is finished. Every change writes to <code>audit_log</code> with the before value, after value and reason.</dd>
+      <dt>Shortcuts</dt><dd><kbd>Space</kbd> reveal, <kbd>A</kbd> accept, <kbd>E</kbd> edit, <kbd>1</kbd> to <kbd>9</kbd> set criterion points, <kbd>J</kbd>/<kbd>K</kbd> next/previous, <kbd>P</kbd> reassign page.</dd>
+      <dt>Coming soon</dt><dd><span class="tag t-soon">Question-wise mode</span> <span class="tag t-soon">Group similar answers</span> sit in the review toolbar.</dd>
+      <dt>Done when</dt><dd>A teacher can finish a 40-booklet batch without leaving the keyboard, and every final mark has either a reviewer or an explicit bulk-accept record.</dd>
+    </dl>
+  </div>
+
+  <div class="feature">
+    <h3><span class="id">M7</span>Results and export <span class="tag t-mid">MID</span></h3>
+    <dl class="kv">
+      <dt>Teacher does</dt><dd>Opens Results. Switches names on (they're off by default). Exports to Excel.</dd>
+      <dt>System does</dt><dd>Shows a marks table by student and question; per-question average, highest mark and % full marks; and a marks histogram to support relative grading. The Excel file has sheet 1 with roll no, name, marks per question and total, and sheet 2 with per-question stats.</dd>
+      <dt>Coming soon</dt><dd><span class="tag t-soon">Script-showing view</span> <span class="tag t-soon">Weak topics</span></dd>
+      <dt>Done when</dt><dd>The Excel file opens cleanly and matches the screen.</dd>
+    </dl>
+  </div>
+
+  <div class="feature">
+    <h3><span class="id">M8</span>Assignment and paper generator (basic) <span class="tag t-mid">MID</span></h3>
+    <dl class="kv">
+      <dt>Teacher does</dt><dd>Picks units, question types and counts, total marks, difficulty, optional Bloom levels, and an optional style sample (the college assignment). Clicks Generate, then edits any question inline.</dd>
+      <dt>System does</dt><dd>C5 runs with the full extracted text of the selected units. Each question comes back with its text, type, marks, Bloom level, answer key, rubric criteria and source page references. The system checks that the marks add up.</dd>
+      <dt>Output</dt><dd>A printable question paper page and a separate printable answer key, saved as PDF from the browser. <b>"Use as exam"</b> turns a generated set into an exam in one click, with the rubric included (<code>source='generated'</code>).</dd>
+      <dt>Coming soon</dt><dd><span class="tag t-soon">Create Set B and C</span> <span class="tag t-soon">Export as Word</span> <span class="tag t-soon">Regenerate this question</span></dd>
+      <dt>Done when</dt><dd>Generating from the provided slides produces an assignment a teacher would use after light edits.</dd>
+    </dl>
+  </div>
+
+  <div class="feature">
+    <h3><span class="id">M9</span>Assistant (basic) <span class="tag t-mid">MID</span></h3>
+    <dl class="kv">
+      <dt>Teacher does</dt><dd>Opens the panel from any page and asks questions or asks for small tasks.</dd>
+      <dt>System does</dt><dd>Everything described in §11: the six read-only tools, slide citations, and results answered with anon IDs.</dd>
+      <dt>Done when</dt><dd>It answers a slide question with a correct page citation, answers a results question correctly, and opens the generator already filled in from a single sentence.</dd>
+    </dl>
+  </div>
+
+  <div class="feature">
+    <h3><span class="id">M10</span>Coming-soon placeholders <span class="tag t-mid">MID</span></h3>
+    <dl class="kv">
+      <dt>What</dt><dd>Greyed-out sidebar items, cards, buttons and assistant chips for final-eval features, all driven from <code>lib/features.ts</code>. Full spec in §14.</dd>
+      <dt>Done when</dt><dd>Every placeholder is clearly inactive, explains what it will do in one line, and becomes live by changing a single flag.</dd>
+    </dl>
+  </div>
+
+  <div class="feature">
+    <h3><span class="id">M11</span>Evaluation harness <span class="tag t-mid">MID</span></h3>
+    <dl class="kv">
+      <dt>What</dt><dd><code>eval/harness.py</code> runs the pipeline on <code>testdata/</code> and writes a report (§16). The team uses it to choose the thinking level, media resolution and prompt version.</dd>
+      <dt>Done when</dt><dd>The mid-eval slides show real agreement numbers with confidence intervals.</dd>
+    </dl>
+  </div>
+</section>
+
+<section id="screens">
+  <h2><span class="n">§13</span>Screens and UI</h2>
+  <p class="sub">The look is calm and dense, closer to Linear or Notion than to a colourful school app. Cool neutral greys, one ink-blue accent, and examiner red used only for marks and flags.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Route</th><th>Content</th></tr></thead>
+    <tbody>
+      <tr><td><code>/dashboard</code></td><td>A greeting and a "What do you want to do?" row of large cards: <b>Check papers</b>, <b>Generate assignment</b>, <b>Ask assistant</b>, plus greyed <span class="tag t-soon">Plan a lesson</span> and <span class="tag t-soon">Write feedback</span>. Below: exams needing review (with flag counts), grading in progress, and recent courses.</td></tr>
+      <tr><td><code>/courses/[id]</code></td><td>Tabs: Exams, Materials, Students, and <span class="tag t-soon">Question bank</span>.</td></tr>
+      <tr><td><code>/courses/[id]/exams/new</code></td><td>A stepper: Paper → Questions → Key & rubric → Mask box → Scripts.</td></tr>
+      <tr><td><code>/exams/[id]</code></td><td>Status header, a step checklist, live progress, and a summary of flags by reason.</td></tr>
+      <tr><td><code>/exams/[id]/rubric</code></td><td>The key on the left and the rubric editor on the right, with an Approve button and version history.</td></tr>
+      <tr><td><code>/exams/[id]/scripts</code></td><td>A booklet grid with quality chips. Clicking a booklet opens the page viewer, where pages can be reassigned.</td></tr>
+      <tr><td><code>/exams/[id]/review</code></td><td><b>The key screen.</b> Left 60%: a zoomable scan with this question's pages highlighted. Right 40%: the question, rubric criteria with points steppers, evidence from graders A and B side by side where they differ, flags as chips, and the transcript (collapsed). Top bar: queue position and filters by flag reason. Bottom: shortcut hints.</td></tr>
+      <tr><td><code>/exams/[id]/results</code></td><td>Table (TanStack), histogram, per-question stats, and Export.</td></tr>
+      <tr><td><code>/courses/[id]/generate</code></td><td>The config form on the left and a live paper preview on the right.</td></tr>
+      <tr><td>Assistant panel</td><td>Slides in from the right on any page (§11).</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Design tokens for the app</h3>
+  <ul>
+    <li>Fonts: <b>Geist</b> or <b>Source Sans 3</b> for the UI (not Inter, which is overused), and <b>JetBrains Mono</b> for marks and IDs.</li>
+    <li>Colours: background <code>#F7F8FA</code>, surface <code>#FFFFFF</code>, text <code>#1A2030</code>, ink-blue accent <code>#2A4A9A</code>, marks red <code>#B8352A</code>, and semantic green and amber for status. Full dark mode.</li>
+    <li>Marks appear as circled examiner scores, for example <span class="score">3 / 4</span>, a detail taken from real answer booklets.</li>
+    <li>Every list has an empty state that points to the next action, and every AI step shows streaming progress text.</li>
+    <li>A Cmd+K palette jumps to any course, exam or student, and Cmd+J opens the assistant.</li>
+  </ul>
+</section>
+
+<section id="soon">
+  <h2><span class="n">§14</span>Coming-soon features in the UI</h2>
+  <p class="sub">Future features appear exactly where they will eventually live, greyed out and labelled "(Coming soon)". This shows the panel the product vision inside the prototype itself.</p>
+  <div class="soon-demo" aria-hidden="true">
+    <span class="live">Check papers</span>
+    <span class="live">Generate assignment</span>
+    <span class="off">Plan a lesson (Coming soon)</span>
+    <span class="off">Question bank (Coming soon)</span>
+  </div>
+  <h3>One component, one list</h3>
+<pre><code>// lib/features.ts
+export const FEATURES = {
+  checking:            { status: "live" },
+  generator:           { status: "live" },
+  assistant:           { status: "live" },
+  lessonPlanner:       { status: "soon", blurb: "Turn a topic into a lecture plan from your slides" },
+  questionBank:        { status: "soon", blurb: "Reuse and tag questions across exams" },
+  feedbackWriter:      { status: "soon", blurb: "Draft personal feedback from marks and comments" },
+  rubricLibrary:       { status: "soon", blurb: "Save and share rubrics" },
+  analytics:           { status: "soon", blurb: "Weak topics and trends across exams" },
+  questionWiseReview:  { status: "soon", blurb: "Check one question across every booklet" },
+  answerGrouping:      { status: "soon", blurb: "Mark similar answers together" },
+  phoneCapture:        { status: "soon", blurb: "Scan booklets with your phone camera" },
+  qrCoverSheet:        { status: "soon", blurb: "Printable cover sheets for automatic sorting" },
+  rubricReapply:       { status: "soon", blurb: "Apply rubric changes to already checked scripts" },
+  multipleSets:        { status: "soon", blurb: "Create Set B and C automatically" },
+  wordExport:          { status: "soon", blurb: "Download in your college's paper format" },
+  regenerateQuestion:  { status: "soon", blurb: "Replace a single question" },
+  scriptShowingView:   { status: "soon", blurb: "A per-question view for showing scripts to students" },
+  assistantActions:    { status: "soon", blurb: "Let the assistant create and update things for you" },
+} as const;
+
+// components/coming-soon.tsx
+// &lt;Feature id="multipleSets"&gt;&lt;Button&gt;Create Set B and C&lt;/Button&gt;&lt;/Feature&gt;
+// live -> renders children as-is
+// soon -> same element, aria-disabled, muted colours, dashed border, "(Coming soon)" suffix,
+//         tooltip with the blurb; click opens a small dialog: name, blurb, "Planned for the next version"</code></pre>
+  <h3>Where placeholders go</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Place</th><th>Placeholders</th></tr></thead>
+    <tbody>
+      <tr><td>Sidebar</td><td>Lesson planner, Question bank, Feedback writer, Rubric library, Analytics (each opens <code>/soon/[feature]</code>, a clean page with a short description)</td></tr>
+      <tr><td>Dashboard cards</td><td>Plan a lesson, Write feedback</td></tr>
+      <tr><td>Scripts screen</td><td>Capture with phone, Print QR cover sheets</td></tr>
+      <tr><td>Rubric screen</td><td>Re-apply to checked scripts</td></tr>
+      <tr><td>Review toolbar</td><td>Question-wise mode, Group similar answers</td></tr>
+      <tr><td>Results</td><td>Script-showing view, Weak topics</td></tr>
+      <tr><td>Generator</td><td>Create Set B and C, Export as Word, Regenerate this question</td></tr>
+      <tr><td>Assistant chips</td><td>"Create an exam from this paper", "Accept all reviewed answers"</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout blue"><p><strong>Keep it tasteful.</strong> Show at most two placeholders per screen, always next to live features. A screen with more grey than working buttons looks unfinished rather than ambitious. Never let a placeholder look clickable in a way that suggests it works.</p></div>
+</section>
+
+<section id="quota">
+  <h2><span class="n">§15</span>Quota budget</h2>
+  <p class="sub">Google no longer publishes free-tier numbers in its docs; they only show in AI Studio for each project. Third-party sources say 15 RPM and 500 RPD, and some older ones say 1,000 to 1,500 RPD. <b>Plan for 250 usable calls per model per day</b>, and read the real limits in AI Studio before relying on them.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Scenario (60 booklets, 6 questions, ~12 pages)</th><th class="num">Model A calls</th><th class="num">Model B calls</th><th>Fits?</th></tr></thead>
+    <tbody>
+      <tr><td>Original plan: page mapping + per-question grading + second pass</td><td class="num">~612</td><td class="num">0</td><td><span class="tag t-cut">no</span></td></tr>
+      <tr><td>This plan: 1 call per booklet per model</td><td class="num">60</td><td class="num">60</td><td><span class="tag t-ok">yes</span></td></tr>
+      <tr><td>Plus setup (C1, C2) and one generator run</td><td class="num">+3</td><td class="num">0</td><td><span class="tag t-ok">yes</span></td></tr>
+      <tr><td>Plus about 30 assistant messages (up to 3 calls each)</td><td class="num">+90</td><td class="num">0</td><td><span class="tag t-ok">yes</span></td></tr>
+      <tr><td>Final eval: targeted re-grades (at most 20% of answers, split across models)</td><td class="num">+36</td><td class="num">+36</td><td><span class="tag t-ok">yes</span></td></tr>
+    </tbody>
+  </table></div>
+  <ul>
+    <li>Tokens per booklet call: 12 pages × about 1,120, plus about 3k for the rubric, comes to roughly 17k. At 250k TPM that allows about 14 calls a minute, so throttle to 8.</li>
+    <li>The assistant falls back to 3.1 Flash-Lite when 3.5 is near its limit.</li>
+    <li>Use a separate Google Cloud project (with its own key) for development, so the demo quota is never touched.</li>
+    <li>A small settings panel shows <code>ai_usage_daily</code>, so the team always knows what's left.</li>
+  </ul>
+</section>
+
+<section id="eval">
+  <h2><span class="n">§16</span>Evaluation harness</h2>
+  <div class="grid2">
+    <div class="panel">
+      <h4>Metrics</h4>
+      <ul>
+        <li>Per criterion: exact agreement, agreement within 0.5, MAE</li>
+        <li>Per question: MAE, within-1 accuracy, QWK (<code>cohen_kappa_score(weights="quadratic")</code>)</li>
+        <li>Per booklet total: MAE, Pearson r, bootstrap 95% CI (1,000 samples)</li>
+        <li>Agreement between graders A and B, and the human-vs-human baseline</li>
+        <li>Run-to-run stability over 3 runs (% of criteria that change)</li>
+        <li>Planted-error detection rate (catches over-correction)</li>
+        <li>Flag precision and recall against cases where the AI differs from the human by 1 mark or more</li>
+        <li>Transcription character error rate (CER) on 5 hand-typed pages</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h4>Breakdowns and experiments</h4>
+      <ul>
+        <li>Every metric split by answer type: theory, numeric, code, diagram</li>
+        <li>Calls, tokens and seconds per booklet</li>
+        <li>Experiments: media resolution medium vs high; thinking level low vs medium; with vs without one graded anchor example; 3.5 alone vs A+B agreement</li>
+        <li>Reports written to <code>eval/reports/&lt;date&gt;.md</code>, with tables ready for the synopsis</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout blue"><p>Report honestly. A result like "theory answers are within 1 mark 85% of the time, code only 40%, so code always goes to the teacher" is stronger at a viva than one inflated accuracy number.</p></div>
+</section>
+
+<section id="privacy">
+  <h2><span class="n">§17</span>Privacy and ethics</h2>
+  <ul>
+    <li><b>Demo data:</b> your own handwritten answers, used with your full consent, plus booklets the team writes.</li>
+    <li><b>Masking:</b> the worker paints over the name and roll-number box before any AI call. Names never appear in prompts; the AI and the assistant only see S001, S002 and so on.</li>
+    <li><b>Free-tier caveat, stated openly:</b> Google may use free-tier inputs and have humans review them. For real classroom use, the setting <code>GEMINI_TIER=paid</code> points to a paid key whose data isn't used for training.</li>
+    <li><b>Teacher is the examiner:</b> nothing becomes final or exportable as final until the teacher has reviewed it or bulk-accepted it, with an audit trail.</li>
+    <li><b>Assistant limits:</b> read-only in the prototype, scoped by RLS, and it never sees student names.</li>
+    <li><b>DPDP basics:</b> a privacy notice at sign-up, data used only for the stated purpose, and a "Delete exam and all scripts" button that removes both the stored files and the database rows.</li>
+    <li><b>Bias:</b> the grading prompt tells the model to ignore neatness, grammar and length, and the harness tests this with planted style variations.</li>
+  </ul>
+</section>
+
+<section id="final">
+  <h2><span class="n">§18</span>Final-eval scope (brief)</h2>
+  <p class="sub">Scope only. Each of these is already visible in the prototype as a coming-soon placeholder, and gets detailed planning after mid eval.</p>
+  <div class="grid2">
+    <div class="panel">
+      <h4>Grading depth</h4>
+      <ul>
+        <li>Targeted re-grade of a single question, using only its pages</li>
+        <li>SymPy verification of steps and final answers for numericals</li>
+        <li>Typed code: run the teacher's test cases in a sandbox</li>
+        <li>Diagram label checklists in the rubric</li>
+        <li>Rubric changes re-applied to already checked scripts</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h4>Review speed</h4>
+      <ul>
+        <li>Question-wise mode: one question across all booklets</li>
+        <li>Answer grouping, with one decision for a whole group</li>
+        <li>Script-showing view: for each question, the scan, the rubric line, the reason, and the change history</li>
+        <li>TA access to a course</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h4>Capture</h4>
+      <ul>
+        <li>Phone batch capture with deskew and blur warnings</li>
+        <li>Printable QR cover sheets</li>
+        <li>Drag to fix page order and add supplementary sheets</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h4>Generator and teacher tools</h4>
+      <ul>
+        <li>Sets A/B/C, a Word file in the college format, regenerate one question, chat-based tweaks</li>
+        <li>Lesson planner, question bank, feedback writer, rubric library</li>
+        <li>Analytics: weak topics, trends across exams</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h4>Assistant</h4>
+      <ul>
+        <li>Actions that change data, each confirmed on a card</li>
+        <li>Multi-step requests (paper → exam → rubric)</li>
+        <li>Explains a student's marks, compares exams, remembers preferences</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h4>Platform and evidence</h4>
+      <ul>
+        <li>Worker on Cloud Run, Supabase keep-alive, paid-tier switch</li>
+        <li>Exam scheme presets for other colleges</li>
+        <li>A study of 50+ booklets and a manual-vs-Deskwork time comparison</li>
+        <li>A pilot with one or two JIIT teachers</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="demo">
+  <h2><span class="n">§19</span>Demo and viva</h2>
+  <h3>Mid-eval demo flow</h3>
+  <ol>
+    <li>The problem in one line: checking takes days, marks are disputed, and paper setting eats hours.</li>
+    <li>The dashboard: three live modules, with coming-soon cards hinting at the rest.</li>
+    <li>Upload the question paper; the questions appear.</li>
+    <li>Upload the <b>handwritten</b> key; approve the rubric.</li>
+    <li>Upload booklets and watch dual-model progress live. One booklet is checked live; the rest are already graded.</li>
+    <li>Review: open a flagged answer where the two models disagreed, reveal the marks, fix one with a reason, and show the audit log.</li>
+    <li>Results and the Excel export.</li>
+    <li>Assistant: "Which question did the class struggle with?", then "Make a 10-mark assignment on that topic". The generator opens already filled in.</li>
+    <li>Accuracy numbers by answer type, and what's coming in the final version.</li>
+  </ol>
+  <p>Safety: everything is pre-cached, a screen recording is kept as backup, and the demo uses its own API key.</p>
+  <h3>Questions the panel will ask</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Question</th><th>Answer</th></tr></thead>
+    <tbody>
+      <tr><td>What if the AI is wrong?</td><td>It never finalises a mark. Two models have to agree. Disagreements, low confidence, harsh marks, code and diagrams all go to the teacher, and the UI makes sure the teacher really looks. Our measured agreement is X, broken down by answer type.</td></tr>
+      <tr><td>Is it actually fair?</td><td>Every booklet is graded against the same approved rubric, with names hidden. Each mark cites its evidence, and every change is in the audit log. That's more consistent than several different checkers, and fully explainable on script-showing day.</td></tr>
+      <tr><td>What about student privacy?</td><td>Names are masked on our side before the AI sees anything. The demo uses consented data. Real use moves to a paid tier that doesn't train on data. There's a privacy notice and a delete option.</td></tr>
+      <tr><td>How is this different from Gradescope or MagicSchool?</td><td>It combines checking, generation and an assistant in one workspace grounded in the teacher's own slides. It verifies marks with two models, is designed against automation bias, is built for Indian booklets, and is free to run.</td></tr>
+      <tr><td>What about CBSE's scanning problems?</td><td>We check page count and blur at upload and tag every page with its booklet ID. Nothing is published automatically.</td></tr>
+      <tr><td>Can the assistant break things?</td><td>Not in the prototype: it's read-only and limited to the teacher's own data. In the final version, every action needs the teacher to confirm it.</td></tr>
+      <tr><td>Why teachers only?</td><td>The teacher is the accountable examiner, and distribution to students already happens through Classroom and WhatsApp.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="synopsis">
+  <h2><span class="n">§20</span>Synopsis outline</h2>
+  <ol>
+    <li><b>Title:</b> Deskwork: An AI Workspace for Teachers with Evidence-Backed Handwritten Exam Evaluation</li>
+    <li><b>Abstract</b> (150 words)</li>
+    <li><b>Problem statement:</b> time spent checking, inconsistency and disputes, repetitive paper setting</li>
+    <li><b>Objectives:</b> rubric-based grading of handwritten scripts with the teacher in the loop; course-grounded assignment generation; an assistant that works inside the app</li>
+    <li><b>Literature and existing systems:</b> Gradescope, Eklavvya, E-Valuate, CoGrader, MagicSchool, Brisk; research on vision-LLM grading (over-correction, consistency, automation bias)</li>
+    <li><b>Proposed system and architecture:</b> the §6 diagram and the §10 pipeline</li>
+    <li><b>Methodology:</b> rubric extraction, dual-model grading, flag rules, forced review, the assistant's tool design</li>
+    <li><b>Work completed (mid):</b> M1 to M11, with screenshots</li>
+    <li><b>Results so far:</b> harness tables broken down by answer type</li>
+    <li><b>Future scope (final):</b> the §18 list, matching the coming-soon placeholders in the prototype</li>
+    <li><b>Privacy and ethics:</b> §17</li>
+    <li><b>References:</b> §21</li>
+  </ol>
+</section>
+
+<section id="sources">
+  <h2><span class="n">§21</span>Sources</h2>
+  <h4>Gemini API</h4>
+  <ul>
+    <li><a href="https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash-lite">Gemini 3.5 Flash-Lite</a> · <a href="https://ai.google.dev/gemini-api/docs/models/gemini-3.1-flash-lite">3.1 Flash-Lite</a> · <a href="https://ai.google.dev/gemini-api/docs/rate-limits">Rate limits</a> · <a href="https://ai.google.dev/gemini-api/docs/pricing">Pricing</a> · <a href="https://ai.google.dev/gemini-api/terms">Terms</a></li>
+    <li><a href="https://ai.google.dev/gemini-api/docs/generate-content/gemini-3">Gemini 3 guide (temperature)</a> · <a href="https://ai.google.dev/gemini-api/docs/thinking">Thinking</a> · <a href="https://ai.google.dev/gemini-api/docs/media-resolution">Media resolution</a> · <a href="https://ai.google.dev/gemini-api/docs/structured-output">Structured output</a> · <a href="https://ai.google.dev/gemini-api/docs/document-processing">PDF input</a> · <a href="https://ai.google.dev/gemini-api/docs/files">Files API</a></li>
+  </ul>
+  <h4>Research on AI grading</h4>
+  <ul>
+    <li><a href="https://arxiv.org/html/2604.22774v2">Vision models over-correct student errors (2604.22774)</a></li>
+    <li><a href="https://arxiv.org/html/2603.13083">Human-in-the-loop grading of handwritten maths (2603.13083)</a></li>
+    <li><a href="https://arxiv.org/html/2609.14284">Criterion-level grading (2609.14284)</a> · <a href="https://arxiv.org/html/2608.20521">Physics grading at scale (2608.20521)</a></li>
+    <li><a href="https://arxiv.org/abs/2605.19043">Handwritten maths grading (2605.19043)</a> · <a href="https://arxiv.org/html/2510.05162v1">Calculus grading (2510.05162)</a></li>
+    <li><a href="https://www.psypost.org/teachers-say-they-distrust-ai-but-still-accept-its-harsh-grading-mistakes-study-finds/">Teachers accept harsh AI grading mistakes (PNAS Nexus coverage)</a></li>
+  </ul>
+  <h4>Institution and market</h4>
+  <ul>
+    <li><a href="https://www.jiit.ac.in/uploads/B_Tech_Acad_Sys_Sep25_ac01c5a085.pdf">JIIT B.Tech Academic System (Sep 2025)</a></li>
+    <li><a href="https://conventuslaw.com/report/india-the-classroom-is-not-exempt-dpdpa-compliance-for-educational-institutions/">DPDP Act for educational institutions</a></li>
+    <li><a href="https://en.wikipedia.org/wiki/2026_CBSE_On-Screen_Marking_controversy">2026 CBSE on-screen marking controversy</a></li>
+    <li><a href="https://guides.gradescope.com/hc/en-us/articles/24838908062093-AI-assisted-grading-and-answer-groups">Gradescope answer groups</a> · <a href="https://www.eklavvya.com/ai-answer-sheet-checking/">Eklavvya</a> · <a href="https://evaluate-ai.app/">E-Valuate AI</a> · <a href="https://www.magicschool.ai/magic-tools">MagicSchool</a></li>
+  </ul>
+  <h4>Hosting limits</h4>
+  <ul>
+    <li><a href="https://vercel.com/docs/functions/configuring-functions/duration">Vercel function duration</a> · <a href="https://supabase.com/docs/guides/platform/free-project-pausing">Supabase free pausing</a> · <a href="https://render.com/docs/free">Render free tier</a> · <a href="https://cloud.google.com/run/pricing">Cloud Run pricing</a></li>
+  </ul>
+</section>
+
+<footer>Deskwork build plan v3 · based on two independent research reviews · check the free-tier Gemini limits in AI Studio before relying on them</footer>
+</main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<script>
+  if (window.mermaid) {
+    mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "loose" });
+  }
+</script>
+</body>
+</html>

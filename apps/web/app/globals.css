@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --paper: #F7F8FA;
+    --sheet: #FFFFFF;
+    --ink: #1A2030;
+    --muted: #5A6377;
+    --rule: #DCE0E8;
+    --rule-soft: #E9ECF2;
+    --blue: #2A4A9A;
+    --blue-soft: #E6ECFA;
+    --red: #B8352A;
+    --red-soft: #FBEAE8;
+    --green: #1F7A4D;
+    --green-soft: #E3F3EA;
+    --amber: #9A6700;
+    --amber-soft: #FBF1D9;
+    --code-bg: #F0F2F7;
+  }
+
+  .dark {
+    --paper: #11141B;
+    --sheet: #171B24;
+    --ink: #E4E8F1;
+    --muted: #9AA3B6;
+    --rule: #2C3342;
+    --rule-soft: #222835;
+    --blue: #93AEF2;
+    --blue-soft: #1E2A47;
+    --red: #F08A7E;
+    --red-soft: #3A1F1D;
+    --green: #6FD1A0;
+    --green-soft: #16302A;
+    --amber: #E8BE5C;
+    --amber-soft: #342A14;
+    --code-bg: #1D2230;
+  }
+
+  body {
+    background-color: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Source Sans 3", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Academic score circle badge */
+  .score-badge {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-weight: 600;
+    color: var(--red);
+    border: 1.5px solid var(--red);
+    border-radius: 9999px;
+    padding: 1px 8px;
+    font-size: 0.82rem;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    background-color: var(--red-soft);
+  }
+
+  .mono-id {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+}
