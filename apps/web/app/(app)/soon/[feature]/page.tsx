@@ -20,10 +20,10 @@ export default async function SoonPage({ params }: SoonPageProps) {
     <div className="max-w-2xl mx-auto py-12 px-6">
       <Link
         href="/dashboard"
-        className="inline-flex items-center gap-1.5 text-xs font-medium text-[#5A6377] hover:text-[#2A4A9A] mb-8 transition-colors"
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-[#5A6377] dark:text-[#9AA3B6] hover:text-[#2A4A9A] dark:hover:text-[#93AEF2] mb-8 transition-colors group"
       >
-        <ArrowLeft className="w-4 h-4" />
-        Back to Dashboard
+        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+        <span>Back to Dashboard</span>
       </Link>
 
       <div className="rounded-2xl border border-[#DCE0E8] dark:border-[#2C3342] bg-[#FFFFFF] dark:bg-[#171B24] p-8 shadow-xs">

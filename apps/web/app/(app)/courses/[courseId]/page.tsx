@@ -10,6 +10,7 @@ import {
   Database,
   Plus,
   ArrowRight,
+  ArrowLeft,
   Upload,
   FileText,
   CheckCircle2,
@@ -115,25 +116,46 @@ export default function CourseDetailPage() {
       s.name.toLowerCase().includes(studentSearch.toLowerCase())
   );
 
+  const isCS402 = courseId.toLowerCase().includes("cs402");
+  const courseCode = isCS402 ? "CS402" : "CS301";
+  const courseName = isCS402
+    ? "Operating Systems and System Software"
+    : "Data Structures and Algorithms";
+  const courseSection = isCS402 ? "Odd Semester 2026 · Section B1" : "Odd Semester 2026 · Section B3";
+
   return (
     <div className="max-w-6xl mx-auto py-8 px-6 space-y-6">
+      {/* Top Navigation Back to Dashboard */}
+      <div className="flex items-center justify-between">
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-[#5A6377] dark:text-[#9AA3B6] hover:text-[#2A4A9A] dark:hover:text-[#93AEF2] transition-colors group"
+        >
+          <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
+          <span>Back to Dashboard</span>
+        </Link>
+        <span className="text-xs text-[#5A6377] dark:text-[#9AA3B6]">
+          Course Workspace
+        </span>
+      </div>
+
       {/* Course Summary Banner */}
       <div className="rounded-2xl border border-[#DCE0E8] dark:border-[#2C3342] bg-[#FFFFFF] dark:bg-[#171B24] p-6 shadow-xs">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
               <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-[#E6ECFA] dark:bg-[#1E2A47] text-[#2A4A9A] dark:text-[#93AEF2]">
-                CS301
+                {courseCode}
               </span>
               <span className="text-xs text-[#5A6377] dark:text-[#9AA3B6]">
-                Odd Semester 2026 · Section B3
+                {courseSection}
               </span>
               <span className="text-xs px-2 py-0.5 rounded bg-[#F7F8FA] dark:bg-[#222835] text-[#5A6377] dark:text-[#9AA3B6]">
                 JIIT Exam Scheme (T1, T2, End Sem, TA)
               </span>
             </div>
             <h1 className="text-2xl font-bold tracking-tight text-[#1A2030] dark:text-[#E4E8F1] mt-2">
-              Data Structures and Algorithms
+              {courseName}
             </h1>
           </div>
 

@@ -34,9 +34,11 @@ export default function ForcedReviewPage() {
         <div className="flex items-center gap-3">
           <Link
             href={`/exams/${examId}`}
-            className="p-1.5 text-[#5A6377] hover:text-[#1A2030] rounded-md transition-colors"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-[#DCE0E8] dark:border-[#2C3342] text-xs font-medium text-[#5A6377] dark:text-[#9AA3B6] hover:text-[#2A4A9A] dark:hover:text-[#93AEF2] hover:border-[#2A4A9A] transition-colors"
+            title="Back to Exam Overview"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Back to Exam</span>
           </Link>
 
           <div className="flex items-center gap-2">

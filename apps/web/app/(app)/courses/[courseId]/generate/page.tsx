@@ -28,14 +28,23 @@ export default function GeneratorPage() {
   return (
     <div className="max-w-6xl mx-auto py-8 px-6 space-y-6">
       <div className="flex items-center justify-between">
-        <Link
-          href={`/courses/${courseId}`}
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-[#5A6377] hover:text-[#2A4A9A] transition-colors"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Back to Course Workspace</span>
-        </Link>
-        <span className="text-xs text-[#5A6377]">
+        <div className="flex items-center gap-3">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-[#5A6377] dark:text-[#9AA3B6] hover:text-[#2A4A9A] dark:hover:text-[#93AEF2] transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Dashboard</span>
+          </Link>
+          <span className="text-xs text-[#5A6377]/40 dark:text-[#9AA3B6]/40">/</span>
+          <Link
+            href={`/courses/${courseId}`}
+            className="inline-flex items-center gap-1 text-xs font-medium text-[#5A6377] dark:text-[#9AA3B6] hover:text-[#2A4A9A] dark:hover:text-[#93AEF2] transition-colors"
+          >
+            <span>Course Workspace</span>
+          </Link>
+        </div>
+        <span className="text-xs text-[#5A6377] dark:text-[#9AA3B6]">
           Module Ownership: Person 4 (Course Materials & Generator)
         </span>
       </div>

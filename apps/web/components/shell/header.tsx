@@ -9,6 +9,44 @@ interface HeaderProps {
   onOpenAssistant?: () => void;
 }
 
+function getBreadcrumbInfo(seg: string, path: string) {
+  if (seg === "courses") {
+    return { label: "Courses", href: "/dashboard#courses" };
+  }
+  if (seg === "exams") {
+    return { label: "Exams", href: "/dashboard" };
+  }
+  if (seg === "c-cs301-2026") {
+    return { label: "CS301", href: path };
+  }
+  if (seg === "c-cs402-2026") {
+    return { label: "CS402", href: path };
+  }
+  if (seg === "exam-t1-cs301") {
+    return { label: "T1 Exam", href: path };
+  }
+  if (seg === "exam-t2-cs301") {
+    return { label: "T2 Exam", href: path };
+  }
+  if (seg === "exam-t2-cs402") {
+    return { label: "T2 Exam", href: path };
+  }
+  if (seg === "exam-assign1-cs301") {
+    return { label: "Assignment 1", href: path };
+  }
+  if (seg.startsWith("c-")) {
+    const code = seg.split("-")[1]?.toUpperCase() || seg;
+    return { label: code, href: path };
+  }
+  if (seg.startsWith("exam-")) {
+    return { label: "Exam", href: path };
+  }
+  return {
+    label: seg.charAt(0).toUpperCase() + seg.slice(1).replace(/-/g, " "),
+    href: path,
+  };
+}
+
 export function AppHeader({ onOpenAssistant }: HeaderProps) {
   const pathname = usePathname();
 
@@ -23,19 +61,21 @@ export function AppHeader({ onOpenAssistant }: HeaderProps) {
           Home
         </Link>
         {segments.map((seg, idx) => {
-          const path = `/${segments.slice(0, idx + 1).join("/")}`;
+          if (seg === "dashboard" && segments.length === 1) return null;
+
+          const rawPath = `/${segments.slice(0, idx + 1).join("/")}`;
           const isLast = idx === segments.length - 1;
-          const label = seg.charAt(0).toUpperCase() + seg.slice(1).replace(/-/g, " ");
+          const { label, href } = getBreadcrumbInfo(seg, rawPath);
 
           return (
-            <React.Fragment key={path}>
+            <React.Fragment key={rawPath}>
               <ChevronRight className="w-3.5 h-3.5 text-[#5A6377]/50" />
               {isLast ? (
                 <span className="font-semibold text-[#1A2030] dark:text-[#E4E8F1] truncate max-w-[180px]">
                   {label}
                 </span>
               ) : (
-                <Link href={path} className="hover:text-[#1A2030] dark:hover:text-[#E4E8F1] transition-colors truncate max-w-[120px]">
+                <Link href={href} className="hover:text-[#1A2030] dark:hover:text-[#E4E8F1] transition-colors truncate max-w-[120px]">
                   {label}
                 </Link>
               )}
