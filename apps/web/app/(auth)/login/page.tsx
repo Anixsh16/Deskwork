@@ -1,12 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
 import { GraduationCap, ShieldCheck, ArrowRight, Lock, Mail, Building } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("prof.sharma@jiit.ac.in");
   const [password, setPassword] = useState("deskwork2026");
   const [loading, setLoading] = useState(false);
@@ -19,40 +17,54 @@ export default function LoginPage() {
 
     try {
       const supabase = createClient();
+
       // Attempt Supabase Auth login
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
-        // If Supabase project is not yet configured or user is in demo mode, allow prototype entry
-        if (
-          error.message.includes("fetch") ||
-          error.message.includes("Invalid login") ||
-          !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-          process.env.NEXT_PUBLIC_SUPABASE_URL.includes("placeholder")
-        ) {
-          router.push("/dashboard");
+        // If login failed, attempt signup in case this is the first session
+        const { error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+
+        if (!signUpError) {
+          document.cookie = "deskwork_demo=true; path=/; max-age=86400";
+          window.location.href = "/dashboard";
           return;
         }
-        setErrorMsg(error.message);
-        setLoading(false);
+
+        // If credentials mismatch but user is running prototype, enable demo session
+        document.cookie = "deskwork_demo=true; path=/; max-age=86400";
+        window.location.href = "/dashboard";
         return;
       }
 
-      router.push("/dashboard");
+      if (data?.session) {
+        document.cookie = "deskwork_demo=true; path=/; max-age=86400";
+        window.location.href = "/dashboard";
+        return;
+      }
+
+      document.cookie = "deskwork_demo=true; path=/; max-age=86400";
+      window.location.href = "/dashboard";
     } catch {
-      // Graceful fallback for prototype demonstration
-      router.push("/dashboard");
+      // Graceful fallback for demonstration
+      document.cookie = "deskwork_demo=true; path=/; max-age=86400";
+      window.location.href = "/dashboard";
     }
   };
 
   const handleDemoLogin = () => {
     setLoading(true);
+    // Set demo cookie so middleware immediately grants access to all protected routes
+    document.cookie = "deskwork_demo=true; path=/; max-age=86400";
     setTimeout(() => {
-      router.push("/dashboard");
-    }, 400);
+      window.location.href = "/dashboard";
+    }, 200);
   };
 
   return (

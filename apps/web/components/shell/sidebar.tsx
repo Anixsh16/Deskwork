@@ -155,13 +155,17 @@ export function AppSidebar() {
               </div>
             </div>
           </div>
-          <Link
-            href="/login"
+          <button
+            type="button"
+            onClick={() => {
+              document.cookie = "deskwork_demo=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+              window.location.href = "/login";
+            }}
             title="Sign out"
             className="p-1.5 text-[#5A6377] hover:text-[#B8352A] rounded-md transition-colors"
           >
             <LogOut className="w-4 h-4" />
-          </Link>
+          </button>
         </div>
       </div>
     </aside>

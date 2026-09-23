@@ -2,7 +2,35 @@
 -- File: supabase/seed.sql
 -- Development and UI testing only. Does NOT insert fake grading runs or fake marks.
 
--- 1. Sample Teacher Profile
+-- 1. Sample User in auth.users (Required to satisfy profiles foreign key constraint)
+insert into auth.users (
+  instance_id,
+  id,
+  aud,
+  role,
+  email,
+  encrypted_password,
+  email_confirmed_at,
+  raw_app_meta_data,
+  raw_user_meta_data,
+  created_at,
+  updated_at
+)
+values (
+  '00000000-0000-0000-0000-000000000000',
+  '11111111-1111-1111-1111-111111111111',
+  'authenticated',
+  'authenticated',
+  'prof.sharma@jiit.ac.in',
+  crypt('deskwork2026', gen_salt('bf')),
+  now(),
+  '{"provider": "email", "providers": ["email"]}'::jsonb,
+  '{"full_name": "Prof. Anish Sharma"}'::jsonb,
+  now(),
+  now()
+) on conflict (id) do nothing;
+
+-- 2. Sample Teacher Profile
 insert into profiles (id, full_name, institution)
 values (
   '11111111-1111-1111-1111-111111111111',
@@ -12,7 +40,7 @@ values (
   full_name = excluded.full_name,
   institution = excluded.institution;
 
--- 2. Sample Course: CS301 Data Structures and Algorithms
+-- 3. Sample Course: CS301 Data Structures and Algorithms
 insert into courses (id, owner_id, code, name, semester, section, scheme_id)
 values (
   '22222222-2222-2222-2222-222222222222',
@@ -24,7 +52,7 @@ values (
   '00000000-0000-0000-0000-000000000001'
 ) on conflict (id) do nothing;
 
--- 3. Sample Course Materials (Slides)
+-- 4. Sample Course Materials (Slides)
 insert into materials (id, course_id, kind, title, unit, storage_path, status)
 values
   (
@@ -56,7 +84,7 @@ values
   )
 on conflict (id) do nothing;
 
--- 4. Sample Students (pseudonymous IDs used in AI prompts; roll numbers and names stay private)
+-- 5. Sample Students (pseudonymous IDs used in AI prompts; roll numbers and names stay private)
 insert into students (id, course_id, anon_id, roll_no, name)
 values
   ('44444444-4444-4444-4444-444444444401', '22222222-2222-2222-2222-222222222222', 'S001', '21103001', 'Aarav Sharma'),
@@ -67,7 +95,7 @@ values
   ('44444444-4444-4444-4444-444444444406', '22222222-2222-2222-2222-222222222222', 'S006', '21103006', 'Eshaan Joshi')
 on conflict (course_id, anon_id) do nothing;
 
--- 5. Sample Exam: T1 Exam
+-- 6. Sample Exam: T1 Exam
 insert into exams (id, course_id, title, kind, max_marks, paper_path, mask_region, expected_pages, status)
 values (
   '55555555-5555-5555-5555-555555555555',
@@ -81,7 +109,7 @@ values (
   'rubric_ready'
 ) on conflict (id) do nothing;
 
--- 6. Sample Extracted Questions
+-- 7. Sample Extracted Questions
 insert into questions (id, exam_id, label, ord, text, max_marks, answer_type, bloom, printed_co)
 values
   (
@@ -141,7 +169,7 @@ values
   )
 on conflict (exam_id, label) do nothing;
 
--- 7. Sample Rubric Version (Frozen and Approved)
+-- 8. Sample Rubric Version (Frozen and Approved)
 insert into rubric_versions (id, exam_id, version, status, source, approved_at)
 values (
   '77777777-7777-7777-7777-777777777777',
@@ -152,7 +180,7 @@ values (
   now()
 ) on conflict (exam_id, version) do nothing;
 
--- 8. Sample Rubric Items (Granular criteria: 0.5 to 3 marks)
+-- 9. Sample Rubric Items (Granular criteria: 0.5 to 3 marks)
 insert into rubric_items (
   id, rubric_version_id, question_id, criterion_key, description,
   marks, accept_alternatives, common_errors, final_answer, tolerance_pct, units, ord
