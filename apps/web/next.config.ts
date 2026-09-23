@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/exams",
-        destination: "/dashboard",
+        destination: "/dashboard#recent-exams",
         permanent: false,
       },
     ];

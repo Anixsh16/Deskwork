@@ -10,7 +10,7 @@ export async function updateSession(request: NextRequest) {
   const isAuthRoute = path.startsWith("/login") || path.startsWith("/auth");
   const isPublicAsset = path.startsWith("/_next") || path.startsWith("/favicon.ico") || path.includes(".");
 
-  if (isPublicAsset) {
+  if (isPublicAsset || path.startsWith("/api")) {
     return supabaseResponse;
   }
 

@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   BookOpen,
   LayoutDashboard,
@@ -31,7 +31,26 @@ const FUTURE_NAV = [
 ] as const;
 
 export function AppSidebar() {
+  const router = useRouter();
   const pathname = usePathname();
+
+  const handleActionClick = (e: React.MouseEvent, sectionId: string) => {
+    if (pathname === "/dashboard") {
+      e.preventDefault();
+      window.history.pushState(null, "", `/dashboard#${sectionId}`);
+      const el = document.getElementById(sectionId);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        el.classList.add("ring-2", "ring-[#2A4A9A]", "ring-offset-4");
+        setTimeout(() => {
+          el.classList.remove("ring-2", "ring-[#2A4A9A]", "ring-offset-4");
+        }, 1500);
+      }
+    } else {
+      e.preventDefault();
+      router.push(`/dashboard#${sectionId}`);
+    }
+  };
 
   return (
     <aside className="w-64 border-r border-[#DCE0E8] dark:border-[#2C3342] bg-[#FFFFFF] dark:bg-[#171B24] flex flex-col justify-between shrink-0 h-screen sticky top-0 select-none">
@@ -92,14 +111,16 @@ export function AppSidebar() {
             <div className="space-y-1">
               <Link
                 href="/dashboard#courses"
-                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-[#5A6377] dark:text-[#9AA3B6] hover:bg-[#F7F8FA] dark:hover:bg-[#222835] hover:text-[#1A2030] dark:hover:text-[#E4E8F1]"
+                onClick={(e) => handleActionClick(e, "courses")}
+                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-[#5A6377] dark:text-[#9AA3B6] hover:bg-[#F7F8FA] dark:hover:bg-[#222835] hover:text-[#1A2030] dark:hover:text-[#E4E8F1] transition-colors"
               >
                 <BookOpen className="w-4 h-4 shrink-0 text-[#2A4A9A]" />
                 <span>My Courses</span>
               </Link>
               <Link
                 href="/dashboard#recent-exams"
-                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-[#5A6377] dark:text-[#9AA3B6] hover:bg-[#F7F8FA] dark:hover:bg-[#222835] hover:text-[#1A2030] dark:hover:text-[#E4E8F1]"
+                onClick={(e) => handleActionClick(e, "recent-exams")}
+                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-[#5A6377] dark:text-[#9AA3B6] hover:bg-[#F7F8FA] dark:hover:bg-[#222835] hover:text-[#1A2030] dark:hover:text-[#E4E8F1] transition-colors"
               >
                 <FileCheck2 className="w-4 h-4 shrink-0 text-[#1F7A4D]" />
                 <span>Check Papers</span>

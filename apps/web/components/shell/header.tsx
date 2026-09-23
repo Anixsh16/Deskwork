@@ -14,7 +14,7 @@ function getBreadcrumbInfo(seg: string, path: string) {
     return { label: "Courses", href: "/dashboard#courses" };
   }
   if (seg === "exams") {
-    return { label: "Exams", href: "/dashboard" };
+    return { label: "Exams", href: "/dashboard#recent-exams" };
   }
   if (seg === "c-cs301-2026") {
     return { label: "CS301", href: path };

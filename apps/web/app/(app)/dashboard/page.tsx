@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   FileCheck2,
@@ -80,6 +80,29 @@ export default function DashboardPage() {
   const [newName, setNewName] = useState("");
   const [newSemester, setNewSemester] = useState("Odd 2026");
   const [newSection, setNewSection] = useState("B4");
+
+  // Scroll to section when URL has a hash (e.g. #courses, #recent-exams)
+  useEffect(() => {
+    const scrollToHash = () => {
+      const hash = window.location.hash.replace("#", "");
+      if (hash) {
+        setTimeout(() => {
+          const el = document.getElementById(hash);
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+            el.classList.add("ring-2", "ring-[#2A4A9A]", "ring-offset-4");
+            setTimeout(() => {
+              el.classList.remove("ring-2", "ring-[#2A4A9A]", "ring-offset-4");
+            }, 1500);
+          }
+        }, 100);
+      }
+    };
+
+    scrollToHash();
+    window.addEventListener("hashchange", scrollToHash);
+    return () => window.removeEventListener("hashchange", scrollToHash);
+  }, []);
 
   const handleCreateCourse = (e: React.FormEvent) => {
     e.preventDefault();
@@ -259,7 +282,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Exams Needing Attention & Recent Runs */}
-      <div>
+      <div id="recent-exams" className="scroll-mt-6 transition-all duration-300 rounded-xl">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-[#5A6377] dark:text-[#9AA3B6]">
             Exams in Progress
@@ -273,7 +296,7 @@ export default function DashboardPage() {
           {RECENT_EXAMS.map((exam) => (
             <div
               key={exam.id}
-              className="p-5 rounded-xl border border-[#DCE0E8] dark:border-[#2C3342] bg-[#FFFFFF] dark:bg-[#171B24] flex flex-col justify-between space-y-4"
+              className="p-5 rounded-xl border border-[#DCE0E8] dark:border-[#2C3342] bg-[#FFFFFF] dark:bg-[#171B24] flex flex-col justify-between space-y-4 shadow-2xs hover:shadow-xs transition-shadow"
             >
               <div className="flex items-start justify-between">
                 <div>
@@ -322,12 +345,23 @@ export default function DashboardPage() {
               </div>
 
               <div className="pt-2 border-t border-[#E9ECF2] dark:border-[#222835] flex items-center justify-between">
-                <Link
-                  href={`/exams/${exam.id}/rubric`}
-                  className="text-xs font-medium text-[#5A6377] hover:text-[#2A4A9A] transition-colors"
-                >
-                  View Rubric
-                </Link>
+                <div className="flex items-center gap-3">
+                  <Link
+                    href={`/exams/${exam.id}/rubric`}
+                    className="text-xs font-medium text-[#5A6377] hover:text-[#2A4A9A] transition-colors"
+                  >
+                    View Rubric
+                  </Link>
+                  {exam.status === "review" && (
+                    <Link
+                      href={`/exams/${exam.id}/review`}
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-[#B8352A] hover:underline"
+                    >
+                      <AlertTriangle className="w-3 h-3" />
+                      <span>Check Flagged ({exam.flaggedCount})</span>
+                    </Link>
+                  )}
+                </div>
                 <Link
                   href={`/exams/${exam.id}`}
                   className="inline-flex items-center gap-1 text-xs font-semibold text-[#2A4A9A] dark:text-[#93AEF2] hover:underline"
@@ -342,7 +376,7 @@ export default function DashboardPage() {
       </div>
 
       {/* My Courses Section */}
-      <div id="courses">
+      <div id="courses" className="scroll-mt-6 transition-all duration-300 rounded-xl">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-[#5A6377] dark:text-[#9AA3B6]">
             My Teaching Courses

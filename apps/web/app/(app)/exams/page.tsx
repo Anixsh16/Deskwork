@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function ExamsRedirectPage() {
-  redirect("/dashboard");
+  redirect("/dashboard#recent-exams");
 }
