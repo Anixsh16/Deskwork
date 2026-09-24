@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, BookOpen, ClipboardCheck, FileQuestion, NotebookPen, PenLine, Sparkles } from "lucide-react";
+import { ArrowRight, BookOpen, ClipboardCheck, FileQuestion, Library, NotebookPen, PenLine } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { useState } from "react";
@@ -167,7 +167,7 @@ export default function Dashboard() {
         <h2 className="mb-4 text-lg font-normal text-ink">More tools</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <ComingSoon variant="card" label="Plan a lesson" description="Lecture plans built from your slides." icon={<NotebookPen />} />
-          <ComingSoon variant="card" label="Write student feedback" description="Personal feedback drafted from marks." icon={<Sparkles />} />
+          <ComingSoon variant="card" label="Question bank" description="Reuse questions across papers and exams." icon={<Library />} />
         </div>
       </section>
 

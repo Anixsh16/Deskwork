@@ -5,6 +5,7 @@ import {
   BookOpen,
   ClipboardCheck,
   Home,
+  Library,
   LineChart,
   LogOut,
   Menu as MenuIcon,
@@ -150,6 +151,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           label="Class analytics"
           description="Weak topics and trends across all your exams."
           icon={<LineChart />}
+        />
+        <ComingSoon
+          variant="nav"
+          label="Question bank"
+          description="Reuse questions across papers and exams."
+          icon={<Library />}
         />
       </div>
     </div>
