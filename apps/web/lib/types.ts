@@ -1,300 +1,156 @@
-// Canonical Deskwork Shared Type System
-// Synchronized with PostgreSQL 0001_init.sql and worker Pydantic schemas.
+import type { Source } from "@/lib/api";
 
-export type ExamKind = "T1" | "T2" | "END_SEM" | "ASSIGNMENT" | "QUIZ" | "OTHER";
-export type ExamStatus = "draft" | "rubric_ready" | "grading" | "review" | "final";
+export type Teacher = { id: string; email: string; full_name: string | null; avatar_url: string | null };
 
-export type AnswerType = "theory" | "numeric" | "code" | "diagram" | "mcq";
-export type BloomLevel = "remember" | "understand" | "apply" | "analyze" | "evaluate" | "create";
+export type FileStatus = "queued" | "processing" | "ready" | "failed";
+export type ParseStatus = "none" | "processing" | "ready" | "failed";
+export type PaperStatus = "reading" | "ready" | "checking" | "checked" | "failed";
+export type Bot = "assignment" | "solution" | "paper" | "ask";
 
-export type RubricSource = "typed_key" | "handwritten_key" | "manual" | "generated";
-export type RubricVersionStatus = "draft" | "approved" | "superseded";
-
-export type SubmissionStatus = "uploaded" | "ready" | "grading" | "graded" | "reviewed" | "error";
-export type GraderId = "A" | "B" | "regrade";
-
-export type GradingFlag =
-  | "cross_page"
-  | "crossed_out"
-  | "diagram"
-  | "code"
-  | "illegible"
-  | "unanswered"
-  | "alt_method"
-  | "possible_misread"
-  | "numeric_mismatch";
-
-export type ReviewStatus = "pending" | "flagged" | "accepted" | "edited" | "spot_checked";
-
-export type JobKind =
-  | "extract_material"
-  | "extract_paper"
-  | "build_rubric"
-  | "ingest_scripts"
-  | "grade_booklet"
-  | "finalize_flags"
-  | "generate_set"
-  | "export_results";
-
-export type JobStatus = "queued" | "running" | "done" | "error";
-
-export type MaterialKind = "slides" | "notes" | "assignment" | "pyq" | "other";
-export type MaterialStatus = "uploaded" | "extracted" | "error";
-
-// Database Record Interfaces
-
-export interface Profile {
+export type CourseSummary = {
   id: string;
-  full_name: string | null;
-  institution: string | null;
-  created_at: string;
-}
-
-export interface ExamSchemeComponent {
-  kind: string;
-  max: number;
-}
-
-export interface ExamScheme {
-  id: string;
-  owner_id: string | null;
   name: string;
-  components: ExamSchemeComponent[];
-}
-
-export interface Course {
-  id: string;
-  owner_id: string;
-  code: string;
-  name: string;
+  code: string | null;
   semester: string | null;
-  section: string | null;
-  scheme_id: string | null;
   created_at: string;
-  scheme?: ExamScheme;
-}
+  file_count: number;
+  ready_files: number;
+  exam_count: number;
+};
 
-export interface Material {
+export type CourseFile = {
   id: string;
-  course_id: string;
-  kind: MaterialKind;
-  title: string;
-  unit: string | null;
-  storage_path: string;
-  status: MaterialStatus;
-  created_at: string;
-}
-
-export interface MaterialPage {
-  id: string;
-  material_id: string;
-  page_no: number;
-  text: string | null;
-  topics: string[] | null;
-}
-
-export interface Student {
-  id: string;
-  course_id: string;
-  anon_id: string; // S001, S002
-  roll_no: string | null;
-  name: string | null;
-}
-
-export interface MaskRegion {
-  page: number;
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-}
-
-export interface Exam {
-  id: string;
-  course_id: string;
-  title: string;
-  kind: ExamKind;
-  max_marks: number | null;
-  paper_path: string | null;
-  mask_region: MaskRegion | null;
-  expected_pages: number | null;
-  status: ExamStatus;
-  created_at: string;
-}
-
-export interface Question {
-  id: string;
-  exam_id: string;
-  label: string; // "1", "2a", "2b"
-  ord: number;
-  text: string;
-  max_marks: number;
-  answer_type: AnswerType;
-  bloom: BloomLevel | null;
-  printed_co: string | null; // Printed reference text only; never used in logic
-}
-
-export interface RubricVersion {
-  id: string;
-  exam_id: string;
-  version: number;
-  status: RubricVersionStatus;
-  source: RubricSource;
-  key_path: string | null;
-  approved_at: string | null;
-}
-
-export interface RubricItem {
-  id: string;
-  rubric_version_id: string;
-  question_id: string;
-  criterion_key: string; // "q1a.c1"
-  description: string;
-  marks: number; // 0.5 to 3 in steps of 0.5
-  accept_alternatives: string[];
-  common_errors: string[];
-  final_answer: string | null;
-  tolerance_pct: number | null;
-  units: string | null;
-  ord: number;
-}
-
-export interface SubmissionQuality {
-  page_count_ok: boolean;
-  blurry_pages: number[];
-}
-
-export interface Submission {
-  id: string;
-  exam_id: string;
-  student_id: string | null;
-  storage_path: string;
+  filename: string;
+  mime: string;
+  size_bytes: number;
   page_count: number | null;
-  quality: SubmissionQuality | null;
-  status: SubmissionStatus;
-  created_at: string;
-  student?: Student;
-}
-
-export interface SubmissionPage {
-  id: string;
-  submission_id: string;
-  page_no: number;
-  image_path: string;
-  blur_score: number | null;
-  masked: boolean;
-}
-
-export interface GradingRun {
-  id: string;
-  submission_id: string;
-  rubric_version_id: string;
-  grader: GraderId;
-  model: string;
-  prompt_version: string;
-  cache_key: string;
-  raw: Record<string, unknown> | null;
-  input_tokens: number | null;
-  output_tokens: number | null;
-  latency_ms: number | null;
-  status: string;
+  chunk_count: number | null;
+  status: FileStatus;
+  progress: number;
   error: string | null;
   created_at: string;
-}
+};
 
-export interface AnswerGrade {
+export type ExamSummary = {
   id: string;
-  run_id: string;
-  question_id: string;
-  pages: number[];
-  transcript: string | null;
-  final_answer: string | null;
-  flags: GradingFlag[];
-  confidence: number | null;
-  total: number | null;
-}
-
-export interface CriterionScore {
-  id: string;
-  answer_grade_id: string;
-  rubric_item_id: string;
-  points: number;
-  evidence: string | null;
-}
-
-export interface FinalMarkCriterion {
-  rubric_item_id: string;
-  points: number;
-}
-
-export interface FinalMark {
-  id: string;
-  submission_id: string;
-  question_id: string;
-  ai_marks: number | null;
-  marks: number | null;
-  criteria: FinalMarkCriterion[] | null;
-  review_status: ReviewStatus;
-  flag_reasons: string[];
-  reviewed_by: string | null;
-  reviewed_at: string | null;
-}
-
-export interface AuditLog {
-  id: number;
-  course_id: string | null;
-  entity: string;
-  entity_id: string;
-  action: string;
-  before: Record<string, unknown> | null;
-  after: Record<string, unknown> | null;
-  reason: string | null;
-  actor: string | null;
-  at: string;
-}
-
-export interface JobProgress {
-  pct?: number;
-  message?: string;
-  current?: number;
-  total?: number;
-  step?: string;
-}
-
-export interface Job {
-  id: number;
-  kind: JobKind;
-  payload: Record<string, unknown>;
-  status: JobStatus;
-  attempts: number;
-  progress: JobProgress | null;
-  error: string | null;
-  run_after: string;
-  locked_at: string | null;
+  title: string;
+  kind: string | null;
+  total_marks: number | null;
+  paper_status: ParseStatus;
+  key_status: ParseStatus;
   created_at: string;
-}
-
-// Composite types used in UI components
-
-export interface QuestionWithRubricItems extends Question {
-  rubric_items?: RubricItem[];
-}
-
-export interface RubricEditorState {
-  questions: Array<{
-    question: Question;
-    items: RubricItem[];
-  }>;
-  totalMarks: number;
-  maxMarks: number;
-  isValid: boolean;
-}
-
-export interface ExamWithDetails extends Exam {
-  course?: Course;
-  questions?: Question[];
-  rubric_version?: RubricVersion;
-  submission_count?: number;
-  graded_count?: number;
+  course_id?: string;
+  course_name?: string;
+  course_code?: string | null;
+  paper_count: number;
+  checked_count: number;
   flagged_count?: number;
-}
+};
+
+export type Course = CourseSummary & {
+  institution: string | null;
+  description: string | null;
+  outcomes: string | null;
+  files: CourseFile[];
+  exams: ExamSummary[];
+};
+
+export type Part = { label: string; text: string; marks: number };
+export type Question = { number: number; text: string; marks: number; co: string | null; has_figure: boolean; parts: Part[] };
+export type MarkingPoint = { point: string; marks: number };
+export type KeyItem = {
+  question_number: number;
+  part_label: string;
+  answer: string;
+  final_answer: string | null;
+  marking_points: MarkingPoint[];
+};
+
+export type PaperRow = {
+  id: string;
+  student_name: string | null;
+  enrollment_no: string | null;
+  batch: string | null;
+  filename: string;
+  status: PaperStatus;
+  error: string | null;
+  total_marks: number | null;
+  flagged_count: number;
+  checked_by: "ai" | "teacher" | null;
+  checked_at: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+  page_count: number;
+  question_marks: Record<string, { marks: number | null; flagged: boolean }>;
+};
+
+export type Exam = ExamSummary & {
+  course_id: string;
+  course_name: string;
+  course_code: string | null;
+  duration: string | null;
+  paper_filename: string | null;
+  paper_error: string | null;
+  paper_notice: string | null;
+  paper_text: string | null;
+  key_filename: string | null;
+  key_error: string | null;
+  key_text: string | null;
+  questions: Question[];
+  key_items: KeyItem[];
+  paper_page_urls: string[];
+  key_page_urls: string[];
+  papers: PaperRow[];
+};
+
+export type Mark = {
+  question_number: number;
+  part_label: string;
+  max_marks: number;
+  attempted: boolean;
+  marks_a: number | null;
+  marks_b: number | null;
+  final_marks: number | null;
+  source: "ai" | "teacher";
+  flagged: boolean;
+  flag_reason: string | null;
+  student_answer: string | null;
+  reasoning: string | null;
+  reasoning_b: string | null;
+  mistakes: string[];
+  confidence: number | null;
+  pages: number[];
+  teacher_note: string | null;
+};
+
+export type PaperDetail = PaperRow & {
+  pages: string[];
+  page_urls: string[];
+  summary: string | null;
+  marks: Mark[];
+  exam: { id: string; title: string; total_marks: number | null; course_id: string; course_name: string };
+  questions: Question[];
+  key_items: KeyItem[];
+  edits: { question_number: number; part_label: string; old_marks: number | null; new_marks: number | null; note: string | null; created_at: string }[];
+  prev_id: string | null;
+  next_id: string | null;
+};
+
+export type ChatSummary = { id: string; bot: Bot; title: string; updated_at: string };
+export type ChatMessage = {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  sources: Source[];
+  attachment_ids: string[];
+  status: "streaming" | "done" | "failed";
+  created_at: string;
+};
+export type Chat = ChatSummary & { messages: ChatMessage[]; attachments: { id: string; filename: string }[] };
+export type Generated = { id: string; bot: Bot; title: string; created_at: string; preview: string };
+
+export const num = (v: number | string | null | undefined) => (v === null || v === undefined ? null : Number(v));
+export const fmt = (v: number | string | null | undefined) => {
+  const n = num(v);
+  return n === null ? "-" : Number.isInteger(n) ? String(n) : n.toFixed(1);
+};

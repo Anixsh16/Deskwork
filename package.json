@@ -1,0 +1,15 @@
+{
+  "name": "deskwork",
+  "private": true,
+  "scripts": {
+    "setup": "npm --prefix apps/web install && cd backend && uv sync",
+    "dev": "concurrently -k -n api,web -c blue,green \"cd backend && uv run uvicorn app.main:app --port 8000 --reload --reload-dir app\" \"npm --prefix apps/web run dev\"",
+    "test": "cd backend && uv run pytest -q",
+    "test:e2e": "cd backend && uv run python -m tests.e2e_flow",
+    "test:ui": "npm --prefix apps/web run test:ui",
+    "reset": "cd backend && uv run python -m tools.reset --yes"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

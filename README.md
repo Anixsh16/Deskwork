@@ -1,100 +1,58 @@
 # Deskwork
 
-> **Set the paper, check the papers, clear the desk.**
+**Set the paper, check the papers, clear the desk.**
 
-Deskwork is an AI workspace built exclusively for teachers. It streamlines the tasks teachers still perform manually: grading handwritten answer scripts with transparent evidence, generating course-grounded assignments and question papers, and querying course materials through a contextual assistant.
+Deskwork is an AI workspace for teachers. A teacher creates a course and uploads its lecture slides once, then:
 
-The teacher always remains the accountable examiner.
+- **Generates** assignments, step-by-step solutions and question papers (with answer keys) from those slides, each in its own focused chatbot, with the slides used shown under every answer.
+- **Checks exams**: upload the question paper and the answer key (typed or handwritten), then each student's scanned paper. Two AI checkers (Gemini 3.5 Flash-Lite and 3.1 Flash-Lite) mark every question from the page images. Where they disagree, or are unsure, the answer is highlighted for the teacher, who can change any mark. Results export to Excel.
 
----
+Students never sign in. Sign-in is Google only, limited to enabled teacher accounts.
 
-## Core Modules
+## How it is built
 
-1. **AI-Assisted Handwritten Exam Checking (Headline Feature):**
-   - Independent dual-model grading (Gemini 3.5 Flash-Lite and Gemini 3.1 Flash-Lite) directly from page images.
-   - Forced review user experience: marks stay hidden until the scan region is viewed, harsh marks require explicit reasons, and spot checks precede bulk approval.
-   - Local student name masking and pseudonymous IDs (S001, S002, etc.) to protect student privacy under data protection regulations.
-   - Granular rubric criteria (0.5 to 3 marks) with full evidence citing the student's own work.
+| Part | What it does |
+|---|---|
+| `apps/web` | Next.js 16 web app (TypeScript, Tailwind, Motion). Google sign-in through Supabase Auth. |
+| `backend` | FastAPI (Python 3.12, uv). All data access, file handling (PDF and PPTX), Gemini calls, grading, local ChromaDB for slide search. |
+| Supabase | Postgres (row level security on, no browser access), private file storage, Google sign-in. Schema in `supabase/migrations`. |
+| ChromaDB | Runs inside the backend, stored in `backend/data/chroma`. Slides are embedded with `gemini-embedding-2`. |
 
-2. **Assignment and Question Paper Generator:**
-   - Grounded directly in the teacher's uploaded course slides.
-   - Structured output with Bloom levels, answer keys, and rubric criteria.
-   - One-click conversion from generated set to active exam.
+Scanned and handwritten files (question papers, answer keys, student papers, uploaded assignments) are always read page by page as images. Lecture slides are read as text.
 
-3. **Contextual Teacher Assistant:**
-   - Server-side streaming chat panel available on every page.
-   - Grounded in course slides with page-level citations.
-   - Read-only tools for querying exam statistics, flagged answers, and pre-filling generators.
+## Run it on your laptop
 
----
+You need Node 20+, [uv](https://docs.astral.sh/uv/) and the two env files.
 
-## Four-Person Team Ownership
+1. `backend/.env`: copy `backend/.env.example` and fill in the Supabase URL and keys, the Session pooler `DATABASE_URL` (from Supabase, Connect, port 5432), the Gemini API key and `ALLOWED_TEACHER_EMAILS`.
+2. `apps/web/.env.local`: copy `apps/web/.env.example` and fill in the Supabase URL and publishable key.
+3. Install and start both servers:
 
-- **Person 1 (Current Role):** Foundation, Exam Setup, Question Extraction, Answer Key, Rubric Management, Shared Database Schema, and Shared Job Queue Contracts.
-- **Person 2:** Handwritten Grading Engine, Local Name Masking, Page Quality Checks, Dual-Model Grading Pipeline.
-- **Person 3:** Review Queue UI, Forced Attention Review, Marks Distribution, Audit Logging, and Excel Export.
-- **Person 4:** Course Material Slide Ingestion, Full-Text Search Indexing, Paper Generator, and Assistant Tools.
-
----
-
-## Architecture Overview
-
-- **Frontend:** Next.js 15 (App Router), TypeScript, Tailwind CSS, shadcn/ui, TanStack Table, Recharts.
-- **Data & Auth:** Supabase (PostgreSQL with Row Level Security, Supabase Auth, Storage Buckets, Realtime subscriptions, Full-Text Search via `tsvector`).
-- **Worker:** Python 3.12, `google-genai`, PyMuPDF, Pillow, OpenCV, Pydantic, `psycopg`.
-- **Job Queue:** PostgreSQL `jobs` table using `FOR UPDATE SKIP LOCKED`.
-- **AI Models:** Gemini 3.5 Flash-Lite (Extraction, Generator, Assistant, Grader A) and Gemini 3.1 Flash-Lite (Grader B).
-
----
-
-## Repository Structure
-
-```
-deskwork/
-  apps/
-    web/                           # Next.js 15 web application
-      app/
-        (auth)/login/              # Teacher authentication
-        (app)/dashboard/           # Central dashboard
-        (app)/courses/[courseId]/  # Course workspace (Exams, Materials, Students)
-        (app)/courses/[courseId]/exams/new/  # Exam setup wizard
-        (app)/exams/[examId]/      # Exam overview and progress
-        (app)/exams/[examId]/rubric/ # Split-view rubric editor
-        (app)/exams/[examId]/scripts/ # Script upload and status (Person 2 shell)
-        (app)/exams/[examId]/review/  # Forced review screen (Person 3 shell)
-        (app)/exams/[examId]/results/ # Results table and export (Person 3 shell)
-        (app)/courses/[courseId]/generate/ # Assignment generator (Person 4 shell)
-        (app)/soon/[feature]/      # Shared coming-soon destination
-        api/assistant/route.ts     # Streaming server-side assistant route
-      components/
-        ui/                        # shadcn/ui design tokens and components
-        rubric/                    # Rubric editing and approval components
-        coming-soon.tsx            # Centralized coming-soon wrapper
-      lib/
-        features.ts                # Feature flag registry
-        types.ts                   # Canonical shared data types
-        supabase/                  # Client and server Supabase clients
-        jobs.ts                    # Job insertion and tracking utilities
-  worker/
-    deskwork_worker/
-      main.py                      # Worker polling loop (FOR UPDATE SKIP LOCKED)
-      jobs/
-        extract_paper.py           # Question paper extraction job
-        build_rubric.py            # Rubric generation job
-      ai/
-        client.py                  # Gemini client with throttling, retry, cache
-        schemas.py                 # Pydantic schemas for structured output
-        prompts/                   # Version-controlled prompt files
-  supabase/
-    migrations/
-      0001_init.sql                # Complete project database schema with RLS
-  eval/                            # Evaluation harness (Person 3 / future)
-  testdata/                        # Test question papers and sample keys (gitignored)
-  .env.example                     # Environment variable template
+```bash
+npm install
+npm run setup
+npm run dev
 ```
 
----
+Open http://localhost:3000 and choose **Continue with Google**.
 
-## Status and Verification
+First-time Supabase setup (already done for this project): run `supabase/migrations/0001_deskwork.sql`, enable the Google provider with the OAuth client from Google Cloud, set the site URL to `http://localhost:3000` and add `http://localhost:3000/**` to the redirect URLs.
 
-See `BUILD_STATUS.md` for live progress, completed phases, and upcoming steps.
+## Tests
+
+| Command | What it checks |
+|---|---|
+| `npm test` | Fast unit tests for marks, flags, default marks, slide chunking and Word export. |
+| `npm run test:e2e` | Every flow against the running API with the real material in `testdata/`: course, slides, all four chatbots, question paper and key reading, two handwritten papers checked, teacher override, Excel, and an assignment checked against generated solutions. |
+| `npm run test:ui` | The same journey clicked through in real Chrome, saving screenshots to `.work/screenshots`. |
+| `npm run reset` | Deletes all courses, exams, papers, chats, files and the slide index (sign-in accounts are kept). |
+
+The end-to-end tests use Gemini and need the test material in `testdata/` (not committed, it holds student answer sheets).
+
+## Gemini limits
+
+The free tier allows about 1,000 embedding requests per model per day; indexing all CN & IoT slides uses about 115. When `gemini-embedding-2` runs out, Deskwork indexes with `gemini-embedding-001` instead and remembers which model each file used. `GEMINI_API_KEY` also accepts several keys separated by commas; the next key is used once one reaches a daily limit. Limits reset at midnight Pacific time (12:30 PM India time).
+
+## Adding a teacher
+
+Add their Google email to `ALLOWED_TEACHER_EMAILS` in `backend/.env` (comma separated). While the Google OAuth app is in Testing mode, also add them as a test user in Google Cloud.

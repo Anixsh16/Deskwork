@@ -1,57 +1,17 @@
-# Node dependencies
 node_modules/
-.pnp
-.pnp.js
-
-# Testing
-coverage/
-
-# Next.js build output
 .next/
 out/
-build/
-dist/
-
-# Python
+.venv/
 __pycache__/
 *.py[cod]
-*$py.class
-*.so
-.Python
-env/
-venv/
-.venv/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-worker/lib/
-worker/lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# Environment variables
+.pytest_cache/
 .env
-.env*.local
+.env.*
 !.env.example
-
-# Supabase
-.supabase/
-
-# Test data (student scripts and answers)
-testdata/scripts/
-testdata/labels/
-testdata/transcripts_gold/
-testdata/**/*.pdf
-!testdata/README.md
-
-# OS files
+backend/data/
+testdata/
+test-results/
+supabase/.temp/
 .DS_Store
-Thumbs.db
+.work/
+.claude/

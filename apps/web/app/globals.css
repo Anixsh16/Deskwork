@@ -1,67 +1,216 @@
 @import "tailwindcss";
+@import "katex/dist/katex.min.css";
+
+@theme {
+  --font-sans: var(--font-google-sans), "Google Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-google-sans-code), ui-monospace, "SF Mono", Menlo, monospace;
+
+  --color-ink: #1f1f1f;
+  --color-ink-2: #444746;
+  --color-muted: #5f6368;
+  --color-faint: #80868b;
+  --color-line: #e3e3e3;
+  --color-line-soft: #eef0f2;
+  --color-canvas: #f8fafd;
+  --color-surface: #ffffff;
+  --color-hover: #f1f3f4;
+
+  --color-brand: #1a73e8;
+  --color-brand-strong: #1557b0;
+  --color-brand-soft: #e8f0fe;
+  --color-brand-tint: #d3e3fd;
+
+  --color-ok: #188038;
+  --color-ok-soft: #e6f4ea;
+  --color-warn: #b06000;
+  --color-warn-soft: #fef7e0;
+  --color-bad: #d93025;
+  --color-bad-soft: #fce8e6;
+  --color-violet: #7c4dff;
+  --color-violet-soft: #f1ebff;
+
+  --shadow-card: 0 1px 2px rgb(60 64 67 / 0.08), 0 1px 3px 1px rgb(60 64 67 / 0.05);
+  --shadow-lift: 0 1px 3px rgb(60 64 67 / 0.12), 0 4px 12px 2px rgb(60 64 67 / 0.08);
+  --shadow-pop: 0 4px 8px 3px rgb(60 64 67 / 0.12), 0 1px 3px rgb(60 64 67 / 0.2);
+
+  --animate-shimmer: shimmer 1.6s linear infinite;
+  @keyframes shimmer {
+    from { background-position: -400px 0; }
+    to { background-position: 400px 0; }
+  }
+}
+
+html,
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--color-brand-tint);
+}
 
 @layer base {
-  :root {
-    --paper: #F7F8FA;
-    --sheet: #FFFFFF;
-    --ink: #1A2030;
-    --muted: #5A6377;
-    --rule: #DCE0E8;
-    --rule-soft: #E9ECF2;
-    --blue: #2A4A9A;
-    --blue-soft: #E6ECFA;
-    --red: #B8352A;
-    --red-soft: #FBEAE8;
-    --green: #1F7A4D;
-    --green-soft: #E3F3EA;
-    --amber: #9A6700;
-    --amber-soft: #FBF1D9;
-    --code-bg: #F0F2F7;
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
   }
+}
 
-  .dark {
-    --paper: #11141B;
-    --sheet: #171B24;
-    --ink: #E4E8F1;
-    --muted: #9AA3B6;
-    --rule: #2C3342;
-    --rule-soft: #222835;
-    --blue: #93AEF2;
-    --blue-soft: #1E2A47;
-    --red: #F08A7E;
-    --red-soft: #3A1F1D;
-    --green: #6FD1A0;
-    --green-soft: #16302A;
-    --amber: #E8BE5C;
-    --amber-soft: #342A14;
-    --code-bg: #1D2230;
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #f1f3f4 0px, #e8eaed 80px, #f1f3f4 160px);
+  background-size: 800px 100%;
+  animation: var(--animate-shimmer);
+}
+
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: #dadce0 transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
+}
 
-  body {
-    background-color: var(--paper);
-    color: var(--ink);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Source Sans 3", sans-serif;
-    -webkit-font-smoothing: antialiased;
+/* Generated documents (assignments, papers, solutions, AI reasoning). */
+.doc {
+  color: var(--color-ink);
+  font-size: 15px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.doc > * + * {
+  margin-top: 0.75em;
+}
+.doc h1 {
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-top: 1.1em;
+}
+.doc h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-top: 1.2em;
+}
+.doc h3,
+.doc h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 1.1em;
+}
+.doc > :first-child {
+  margin-top: 0;
+}
+.doc ul {
+  list-style: disc;
+  padding-left: 1.4em;
+}
+.doc ol {
+  list-style: decimal;
+  padding-left: 1.5em;
+}
+.doc li + li {
+  margin-top: 0.3em;
+}
+.doc strong {
+  font-weight: 600;
+}
+.doc a {
+  color: var(--color-brand);
+}
+.doc code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  background: var(--color-hover);
+  border-radius: 6px;
+  padding: 0.1em 0.35em;
+}
+.doc pre {
+  background: #f6f8fa;
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  overflow-x: auto;
+}
+.doc pre code {
+  background: none;
+  padding: 0;
+}
+.doc blockquote {
+  border-left: 3px solid var(--color-brand-tint);
+  padding-left: 12px;
+  color: var(--color-ink-2);
+}
+.doc hr {
+  border: 0;
+  border-top: 1px solid var(--color-line);
+  margin: 1.4em 0;
+}
+.doc .table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+}
+.doc table {
+  border-collapse: collapse;
+  width: max-content;
+  min-width: 100%;
+  font-size: 14px;
+}
+.doc th,
+.doc td {
+  overflow-wrap: normal;
+  word-break: normal;
+  max-width: 28rem;
+}
+.doc th {
+  white-space: nowrap;
+}
+.doc th,
+.doc td {
+  border-bottom: 1px solid var(--color-line-soft);
+  padding: 8px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+.doc th {
+  background: var(--color-canvas);
+  font-weight: 600;
+}
+.doc tr:last-child td {
+  border-bottom: 0;
+}
+.doc .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 4px 0;
+}
+.doc-sm {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+@media print {
+  .doc {
+    font-size: 12pt;
   }
-
-  /* Academic score circle badge */
-  .score-badge {
-    font-family: "JetBrains Mono", ui-monospace, monospace;
-    font-weight: 600;
-    color: var(--red);
-    border: 1.5px solid var(--red);
-    border-radius: 9999px;
-    padding: 1px 8px;
-    font-size: 0.82rem;
-    white-space: nowrap;
-    display: inline-flex;
-    align-items: center;
-    background-color: var(--red-soft);
-  }
-
-  .mono-id {
-    font-family: "JetBrains Mono", ui-monospace, monospace;
-    font-weight: 600;
-    letter-spacing: -0.02em;
+  .doc .table-wrap {
+    overflow: visible;
   }
 }

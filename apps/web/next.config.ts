@@ -1,20 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  async redirects() {
-    return [
-      {
-        source: "/courses",
-        destination: "/dashboard#courses",
-        permanent: false,
-      },
-      {
-        source: "/exams",
-        destination: "/dashboard#recent-exams",
-        permanent: false,
-      },
-    ];
-  },
+  agentRules: false,
+  devIndicators: false,
 };
 
 export default nextConfig;
