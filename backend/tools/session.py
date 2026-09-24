@@ -15,7 +15,7 @@ from app.config import get_settings
 
 
 def _email() -> str:
-    return sorted(get_settings().allowed_emails)[0]
+    return get_settings().allowed_teacher_emails.split(",")[0].strip().lower()
 
 
 def _admin(client: httpx.Client) -> dict:
