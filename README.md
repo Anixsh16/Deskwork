@@ -54,5 +54,3 @@ Open http://localhost:3000 and choose **Continue with Google**. To enable a teac
 | `npm run test:e2e` | Every flow against the running API with real CN & IoT course material |
 | `npm run test:ui` | The same journey in Chrome, with screenshots |
 | `npm run reset` | Clears all app data (sign-in accounts are kept) |
-
-The project presentation and the original build plan are in [`docs/`](docs).
