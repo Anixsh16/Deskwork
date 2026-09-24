@@ -3,7 +3,6 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   BookOpen,
-  CalendarCheck,
   ClipboardCheck,
   Home,
   LineChart,
@@ -151,12 +150,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           label="Class analytics"
           description="Weak topics and trends across all your exams."
           icon={<LineChart />}
-        />
-        <ComingSoon
-          variant="nav"
-          label="Attendance"
-          description="Mark and track attendance for each class."
-          icon={<CalendarCheck />}
         />
       </div>
     </div>
