@@ -31,7 +31,7 @@ B.Tech Major Project, Jaypee Institute of Information Technology, Noida.
 |---|---|---|
 | **Yug Jindal** | 23103328 | System architecture and backend. RAG pipeline: slide extraction, chunking, `gemini-embedding-2` embeddings, ChromaDB vector search. Dual-model grading engine, with disagreement flags and mark merging. Gemini integration: structured output, streaming, rate limits, key rotation. |
 | Anish Das | 23103322 | Web app screens and UI: dashboard, course pages, chat interface, exam table |
-| Yashita Gogia | 23103305 | Prompt design for the generators, test material and answer sheets, end-to-end testing |
+| Yashita Gogia | 23103305 | Prompt design for the generators, test material and answer sheets |
 | Anjaneya Sharma | 23103301 | Supabase setup (Google sign-in, database schema, storage), Excel and Word export, documentation and presentation |
 
 ## Run it locally
