@@ -1,32 +1,42 @@
 # Deskwork
 
-**Set the paper, check the papers, clear the desk.**
+**An AI workspace for teachers to set papers and check answer sheets from their own course material.**
 
-Deskwork is an AI workspace for teachers. A teacher creates a course and uploads its lecture slides once, then:
+B.Tech Major Project, Jaypee Institute of Information Technology, Noida.
 
-- **Generates** assignments, step-by-step solutions and question papers (with answer keys) from those slides, each in its own focused chatbot, with the slides used shown under every answer.
-- **Checks exams**: upload the question paper and the answer key (typed or handwritten), then each student's scanned paper. Two AI checkers (Gemini 3.5 Flash-Lite and 3.1 Flash-Lite) mark every question from the page images. Where they disagree, or are unsure, the answer is highlighted for the teacher, who can change any mark. Results export to Excel.
+## What it does
 
-Students never sign in. Sign-in is Google only, limited to enabled teacher accounts.
+- **Course material, uploaded once.** A teacher uploads a course's lecture slides (PDF or PPTX). Deskwork indexes them for search.
+- **Generators grounded in the slides.** Separate chatbots write assignments, step-by-step solutions, and question papers with answer keys. Each also offers an "ask your slides" mode. Every answer lists the slide pages it used, and results export to Word.
+- **Exam checking.**
+  1. Upload the question paper and the answer key, typed or handwritten.
+  2. Upload each student's scanned answer sheet.
+  3. Two AI checkers (Gemini 3.5 Flash-Lite and 3.1 Flash-Lite) mark every question from the page images.
+  4. Deskwork highlights answers where the two checkers disagree or are unsure.
+  5. The teacher can change any mark, and results export to Excel.
+- **Teachers only.** Sign-in is Google only, limited to enabled teacher accounts. Students never sign in.
 
-## How it is built
+## Architecture
 
-| Part | What it does |
+| Part | Role |
 |---|---|
-| `apps/web` | Next.js 16 web app (TypeScript, Tailwind, Motion). Google sign-in through Supabase Auth. |
-| `backend` | FastAPI (Python 3.12, uv). All data access, file handling (PDF and PPTX), Gemini calls, grading, local ChromaDB for slide search. |
-| Supabase | Postgres (row level security on, no browser access), private file storage, Google sign-in. Schema in `supabase/migrations`. |
-| ChromaDB | Runs inside the backend, stored in `backend/data/chroma`. Slides are embedded with `gemini-embedding-2`. |
+| `apps/web` | Next.js 16 and React 19 web app (Tailwind, Motion), in a Google Workspace style UI |
+| `backend` | FastAPI (Python 3.12): API, PDF and PPTX reading, Gemini calls, grading |
+| Supabase | Google sign-in, Postgres (row level security on), private file storage |
+| ChromaDB | Local vector database for slide search, embeddings from `gemini-embedding-2` |
 
-Scanned and handwritten files (question papers, answer keys, student papers, uploaded assignments) are always read page by page as images. Lecture slides are read as text.
+## Team
 
-## Run it on your laptop
+| Member | Enrolment no. | Work |
+|---|---|---|
+| **Yug Jindal** | 23103328 | System architecture and backend. RAG pipeline: slide extraction, chunking, `gemini-embedding-2` embeddings, ChromaDB vector search. Dual-model grading engine, with disagreement flags and mark merging. Gemini integration: structured output, streaming, rate limits, key rotation. |
+| Anish Das | 23103322 | Web app screens and UI: dashboard, course pages, chat interface, exam table |
+| Yashita Gogia | 23103305 | Prompt design for the generators, test material and answer sheets, end-to-end testing |
+| Anjaneya Sharma | 23103301 | Supabase setup (Google sign-in, database schema, storage), Excel and Word export, documentation and presentation |
 
-You need Node 20+, [uv](https://docs.astral.sh/uv/) and the two env files.
+## Run it locally
 
-1. `backend/.env`: copy `backend/.env.example` and fill in the Supabase URL and keys, the Session pooler `DATABASE_URL` (from Supabase, Connect, port 5432), the Gemini API key and `ALLOWED_TEACHER_EMAILS`.
-2. `apps/web/.env.local`: copy `apps/web/.env.example` and fill in the Supabase URL and publishable key.
-3. Install and start both servers:
+You need Node 20+, [uv](https://docs.astral.sh/uv/) and two env files, `backend/.env` and `apps/web/.env.local`. Copy them from the `.env.example` files next to them.
 
 ```bash
 npm install
@@ -34,25 +44,15 @@ npm run setup
 npm run dev
 ```
 
-Open http://localhost:3000 and choose **Continue with Google**.
-
-First-time Supabase setup (already done for this project): run `supabase/migrations/0001_deskwork.sql`, enable the Google provider with the OAuth client from Google Cloud, set the site URL to `http://localhost:3000` and add `http://localhost:3000/**` to the redirect URLs.
+Open http://localhost:3000 and choose **Continue with Google**. To enable a teacher, add their email to `ALLOWED_TEACHER_EMAILS` in `backend/.env`.
 
 ## Tests
 
-| Command | What it checks |
+| Command | Checks |
 |---|---|
-| `npm test` | Fast unit tests for marks, flags, default marks, slide chunking and Word export. |
-| `npm run test:e2e` | Every flow against the running API with the real material in `testdata/`: course, slides, all four chatbots, question paper and key reading, two handwritten papers checked, teacher override, Excel, and an assignment checked against generated solutions. |
-| `npm run test:ui` | The same journey clicked through in real Chrome, saving screenshots to `.work/screenshots`. |
-| `npm run reset` | Deletes all courses, exams, papers, chats, files and the slide index (sign-in accounts are kept). |
+| `npm test` | Unit tests: marks, flags, slide chunking, Word export |
+| `npm run test:e2e` | Every flow against the running API with real CN & IoT course material |
+| `npm run test:ui` | The same journey in Chrome, with screenshots |
+| `npm run reset` | Clears all app data (sign-in accounts are kept) |
 
-The end-to-end tests use Gemini and need the test material in `testdata/` (not committed, it holds student answer sheets).
-
-## Gemini limits
-
-The free tier allows about 1,000 embedding requests per model per day; indexing all CN & IoT slides uses about 115. When `gemini-embedding-2` runs out, Deskwork indexes with `gemini-embedding-001` instead and remembers which model each file used. `GEMINI_API_KEY` also accepts several keys separated by commas; the next key is used once one reaches a daily limit. Limits reset at midnight Pacific time (12:30 PM India time).
-
-## Adding a teacher
-
-Add their Google email to `ALLOWED_TEACHER_EMAILS` in `backend/.env` (comma separated). While the Google OAuth app is in Testing mode, also add them as a test user in Google Cloud.
+The project presentation and the original build plan are in [`docs/`](docs).
