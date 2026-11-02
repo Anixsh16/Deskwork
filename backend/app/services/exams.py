@@ -278,13 +278,13 @@ def _key_block(key_items: list[dict]) -> str:
 async def _grade_once(model: str, parts: list[dict]) -> tuple[GradedPaper | None, dict]:
     started = time.monotonic()
     try:
-        graded, usage = await gemini.generate_json(
+        graded, usage = await asyncio.wait_for(gemini.generate_json(
             parts, GradedPaper, system=prompts.GRADE_PAPER, model=model, thinking="medium", high_res=True
-        )
+        ), timeout=get_settings().grading_timeout_seconds)
         return graded, {"usage": usage, "ms": int((time.monotonic() - started) * 1000), "error": None}
     except Exception as e:
         log.exception("Grading with %s failed", model)
-        return None, {"usage": {}, "ms": int((time.monotonic() - started) * 1000), "error": str(e)[:500]}
+        return None, {"usage": {}, "ms": int((time.monotonic() - started) * 1000), "error": f"{type(e).__name__}: {e}"[:500]}
 
 
 def merge_grades(items: list[Item], primary: GradedPaper | None, second: GradedPaper | None) -> list[dict]:
@@ -426,8 +426,10 @@ async def reset_checked_papers(conn, exam_id: str) -> int:
     return len(ids)
 
 
-async def apply_new_maximums(conn, exam_id: str, maximums: dict[tuple[int, str], float]) -> None:
-    """Marks-only edits keep existing checking: new maximums apply, marks above them are capped and flagged."""
+async def apply_new_maximums(conn, exam_id: str, maximums: dict[tuple[int, str], float], actor=None) -> None:
+    """Marks-only edits preserve checking and serialize with teacher corrections."""
+    # Same lock order as mark editing: lock papers BEFORE reading or updating their marks.
+    await conn.execute('select id from student_papers where exam_id=%s order by id for update',(exam_id,))
     rows = await (await conn.execute(
         """select m.id, m.paper_id, m.question_number, m.part_label, m.final_marks from paper_marks m
            join student_papers p on p.id = m.paper_id where p.exam_id = %s""",
@@ -445,6 +447,10 @@ async def apply_new_maximums(conn, exam_id: str, maximums: dict[tuple[int, str],
                else flag_reason end where id = %s""",
             (new_max, new_max if capped else r["final_marks"], capped, capped, r["id"]),
         )
+        if capped:
+            await conn.execute("""insert into mark_edits(paper_id,question_number,part_label,old_marks,new_marks,note,actor)
+              values(%s,%s,%s,%s,%s,%s,%s)""",(r['paper_id'],r['question_number'],r['part_label'],r['final_marks'],new_max,
+              f'Question maximum changed to {new_max:g}; mark capped for review.',actor))
         papers.add(r["paper_id"])
     for pid in papers:
         await recompute_on(conn,str(pid))

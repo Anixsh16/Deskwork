@@ -1,6 +1,6 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -49,6 +49,7 @@ export default function QuestionWise() {
   const [picked, setPicked] = useState(0),
     [selected, setSelected] = useState<string[]>([]),
     [student, setStudent] = useState("");
+  const [dirty, setDirty] = useState(false);
   const ex = useQuery({
     queryKey: ["exam", examId],
     queryFn: () => api<Exam>("/exams/" + examId),
@@ -62,7 +63,7 @@ export default function QuestionWise() {
     refetchInterval: (q) =>
       q.state.data?.batches.some((b) =>
         ["queued", "processing"].includes(b.status),
-      )
+      ) || q.state.data?.papers.some((p) => p.status === "checking")
         ? 2000
         : false,
   });
@@ -71,7 +72,13 @@ export default function QuestionWise() {
   );
   const row = q.data?.papers.find((p) => p.id === student) ?? q.data?.papers[0];
   const detail = useQuery({
-    queryKey: ["question-paper", row?.id, active?.completed, number],
+    queryKey: [
+      "question-paper",
+      row?.id,
+      number,
+      row?.status,
+      row?.marks.map((m) => m.final_marks).join(":"),
+    ],
     queryFn: () => api<PaperDetail>("/papers/" + row!.id),
     enabled: !!row,
   });
@@ -104,6 +111,7 @@ export default function QuestionWise() {
       <div className="my-6 flex flex-wrap items-center gap-3">
         <select
           aria-label="Question to check"
+          disabled={dirty}
           className={selectClass + " max-w-xs"}
           value={number}
           onChange={(e) => {
@@ -119,7 +127,7 @@ export default function QuestionWise() {
         </select>
         <Button
           loading={start.isPending}
-          disabled={!!active || !q.data?.papers.length}
+          disabled={dirty || !!active || !q.data?.papers.length}
           onClick={() => start.mutate()}
           icon={<Sparkles className="size-4" />}
         >
@@ -211,6 +219,7 @@ export default function QuestionWise() {
                 />
                 <button
                   className="min-w-0 flex-1 text-left"
+                  disabled={dirty}
                   onClick={() => setStudent(p.id)}
                 >
                   <div className="truncate text-sm font-medium">
@@ -244,11 +253,11 @@ export default function QuestionWise() {
             ) : (
               detail.data && (
                 <QuestionReview
-                  key={
-                    row!.id + ":" + number + ":" + (active?.completed ?? "idle")
-                  }
+                  key={row!.id + ":" + number}
                   paper={detail.data}
                   number={number}
+                  onDirty={setDirty}
+                  busy={!!active || row?.status === "checking"}
                   refresh={() => {
                     qc.invalidateQueries({ queryKey: ["question-paper"] });
                     qc.invalidateQueries({ queryKey: ["question-check"] });
@@ -268,13 +277,37 @@ function QuestionReview({
   paper,
   number,
   refresh,
+  onDirty,
+  busy,
 }: {
   paper: PaperDetail;
   number: number;
+  onDirty: (dirty: boolean) => void;
+  busy: boolean;
   refresh: () => void;
 }) {
   const [drafts, setDrafts] = useState<Record<string, Draft>>({}),
     [page, setPage] = useState(0);
+  const unsaved = Object.keys(drafts).length > 0;
+  useEffect(() => {
+    if (!unsaved) return;
+    const unload = (e: BeforeUnloadEvent) => e.preventDefault();
+    const click = (e: MouseEvent) => {
+      if (
+        (e.target as Element).closest("a[href]") &&
+        !window.confirm("Leave without saving these marks?")
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+    window.addEventListener("beforeunload", unload);
+    document.addEventListener("click", click, true);
+    return () => {
+      window.removeEventListener("beforeunload", unload);
+      document.removeEventListener("click", click, true);
+    };
+  }, [unsaved]);
   const marks = paper.marks.filter((m) => m.question_number === number);
   const save = useMutation({
     mutationFn: () =>
@@ -291,6 +324,7 @@ function QuestionReview({
       }),
     onSuccess: () => {
       setDrafts({});
+      onDirty(false);
       refresh();
       toast("Marks saved");
     },
@@ -328,7 +362,12 @@ function QuestionReview({
             />
           )}
         </div>
-        <div className="space-y-3">
+        <fieldset disabled={busy} className="min-w-0 space-y-3">
+          {busy && (
+            <p className="text-xs text-muted">
+              Review and edit after this batch finishes.
+            </p>
+          )}
           {marks.length ? (
             marks.map((m) => (
               <MarkCard
@@ -343,14 +382,13 @@ function QuestionReview({
                     k.question_number === number &&
                     k.part_label === m.part_label,
                 )}
-                onDraft={(d) =>
-                  setDrafts((prev) => {
-                    const n = { ...prev };
-                    if (d) n[m.part_label] = d;
-                    else delete n[m.part_label];
-                    return n;
-                  })
-                }
+                onDraft={(d) => {
+                  const n = { ...drafts };
+                  if (d) n[m.part_label] = d;
+                  else delete n[m.part_label];
+                  setDrafts(n);
+                  onDirty(Object.keys(n).length > 0);
+                }}
                 onJump={(p) => setPage(p - 1)}
               />
             ))
@@ -370,6 +408,17 @@ function QuestionReview({
               Save marks
             </Button>
           )}
+          {unsaved && (
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setDrafts({});
+                onDirty(false);
+              }}
+            >
+              Discard changes
+            </Button>
+          )}
           <details className="rounded-2xl bg-canvas p-4 text-sm">
             <summary className="cursor-pointer font-medium">
               Official answer key
@@ -386,7 +435,7 @@ function QuestionReview({
                 </div>
               ))}
           </details>
-        </div>
+        </fieldset>
       </div>
     </Card>
   );

@@ -206,7 +206,12 @@ export default function Bank() {
               setOffset(0);
             }}
           >
-            <option value="">All {f.label.toLowerCase()}s</option>
+            <option value="">
+              All{" "}
+              {f.label === "Difficulty"
+                ? "difficulties"
+                : f.label.toLowerCase() + "s"}
+            </option>
             {f.options.map((o) => (
               <option key={o}>{o}</option>
             ))}

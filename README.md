@@ -69,3 +69,5 @@ Open http://localhost:3000 and choose **Continue with Google**. To enable a teac
 - Deploy `apps/web` on Vercel and `backend/Dockerfile` on Render. Set `FRONTEND_ORIGIN` to a comma-separated list of allowed web origins and `NEXT_PUBLIC_API_URL` to the Render URL. Add the Vercel auth callback to Supabase redirect URLs.
 - Run one backend worker per service. Free Render instances can sleep; long jobs interrupted by a restart are shown as failed and can be retried. This release is not a durable multi-worker job system.
 - Local unit/database tests: set `TEST_DATABASE_URL` to a disposable local PostgreSQL. The database tests reject remote hosts.
+
+The live frontend is https://deskwork-jiit.vercel.app and the API is https://deskwork-api.onrender.com. Render deploys pushes to `main`. For frontend releases, run `npx vercel@latest deploy --prod` from the repository root (Vercel Git integration is not connected).

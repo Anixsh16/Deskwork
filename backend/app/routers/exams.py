@@ -308,7 +308,7 @@ async def save_questions(exam_id: str, body: list[QuestionIn], teacher: Teacher 
         if set(old_items) != set(new_items):
             reset = await exam_service.reset_checked_papers(conn, exam_id)
         elif old_items != new_items:
-            await exam_service.apply_new_maximums(conn, exam_id, new_items)
+            await exam_service.apply_new_maximums(conn, exam_id, new_items, teacher.id)
     return {"ok": True, "papers_reset": reset}
 
 

@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     embed_dims: int = 768
     # Free tier limits vary by account (roughly 15 to 30 RPM for Flash-Lite, 100 RPM and 30k TPM for
     # embeddings), so stay safely below them.
+    grading_timeout_seconds: int = 180
     generate_rpm: int = 12
     embed_rpm: int = 80
     embed_tpm: int = 24000

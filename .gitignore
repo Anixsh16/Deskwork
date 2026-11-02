@@ -15,3 +15,5 @@ supabase/.temp/
 .DS_Store
 .work/
 .claude/
+
+.vercel/
