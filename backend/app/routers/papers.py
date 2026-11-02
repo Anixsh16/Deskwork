@@ -33,9 +33,9 @@ async def upload_paper(exam_id: str, files: list[UploadFile] = File(...), teache
         f"{teacher.id}/{exam['course_id']}/exams/{exam_id}/student-papers", files
     )
     row = await db.fetch_one(
-        """insert into student_papers (exam_id, filename, file_path, pages, status)
-           values (%s, %s, %s, %s, 'reading') returning id""",
-        exam_id, name, original, db.jsonb(pages),
+        """insert into student_papers (exam_id, filename, file_path, pages, status, is_sample)
+           values (%s, %s, %s, %s, 'reading', (select is_sample from courses where id=%s)) returning id""",
+        exam_id, name, original, db.jsonb(pages), exam['course_id'],
     )
     paper_id = str(row["id"])
     tasks.run_in_background(f"identity-{paper_id}", lambda: exam_service.read_identity(paper_id))
@@ -155,7 +155,7 @@ async def start_manual(paper_id: str, teacher: Teacher = Depends(current_teacher
                 (paper_id, it.question_number, it.part_label, it.max_marks),
             )
         await conn.execute(
-            "update student_papers set status = 'checked', checked_by = 'teacher', checked_at = now(), total_marks = null where id = %s",
+            "update student_papers set status = 'ready', checked_by = 'teacher', checked_at = null, total_marks = null where id = %s",
             (paper_id,),
         )
     return {"ok": True}

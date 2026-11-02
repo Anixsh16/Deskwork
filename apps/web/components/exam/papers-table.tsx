@@ -344,7 +344,7 @@ function PaperRowView({
             />
           )
         ) : (
-          <StatusPill status={p.status} labels={{ ready: "Not checked" }} />
+          <StatusPill status={p.status} labels={{ ready: p.checked_by === "teacher" ? "Manual review in progress" : "Not checked" }} />
         )}
         {p.status === "failed" && p.error && (
           <div className="mt-1 max-w-40 text-[11px] text-bad">{p.error}</div>
@@ -354,15 +354,15 @@ function PaperRowView({
         <div className="flex items-center justify-end gap-1">
           {(p.status === "ready" || p.status === "failed") && (
             <>
-              <Button
+              {p.checked_by !== "teacher" && <Button
                 size="sm"
                 icon={<Sparkles className="size-3.5" />}
                 loading={busy}
                 onClick={onCheck}
               >
                 Check
-              </Button>
-              <IconButton label="Check manually" onClick={onManual}>
+              </Button>}
+              <IconButton label={p.checked_by === "teacher" ? "Continue manual review" : "Check manually"} onClick={onManual}>
                 <PenLine className="size-4" />
               </IconButton>
             </>

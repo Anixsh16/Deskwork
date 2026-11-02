@@ -464,7 +464,7 @@ async def recompute_on(conn, paper_id: str) -> None:
     expected = {i.key for i in grading_items(questions)}
     present = {(r['question_number'],r['part_label']) for r in rows if r['final_marks'] is not None}
     complete = bool(expected) and expected == present
-    status = 'checked' if complete or paper['checked_by']=='teacher' else 'ready'
+    status = 'checked' if complete else 'ready'
     await conn.execute("""update student_papers set total_marks=%s,flagged_count=%s,status=%s where id=%s""",
         (sum(float(r['final_marks'] or 0) for r in rows) if complete else None,sum(r['flagged'] for r in rows),status,paper_id))
 

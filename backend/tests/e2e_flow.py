@@ -20,6 +20,7 @@ API = "http://localhost:8000/api"
 ROOT = Path(__file__).resolve().parents[2]
 DATA = ROOT / "testdata"
 REPORT: dict = {"checks": []}
+REPORT_PATH = ROOT / ".work" / "e2e-report.json"
 
 
 class Client:
@@ -61,6 +62,8 @@ class Client:
 def check(name: str, ok: bool, detail: str = "") -> None:
     REPORT["checks"].append({"name": name, "ok": bool(ok), "detail": detail})
     print(f"  [{'PASS' if ok else 'FAIL'}] {name}{f' :: {detail}' if detail else ''}", flush=True)
+    REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    REPORT_PATH.write_text(json.dumps(REPORT,indent=2,default=str))
 
 
 def poll(fn, done, timeout: int = 600, every: float = 3):
@@ -107,11 +110,13 @@ def run(course_id: str | None, skip_slides: bool) -> None:
     for bot in ("assignment", "solution", "paper", "ask"):
         chats[bot] = c.json("POST", f"/courses/{course_id}/chats", json={"bot": bot})["id"]
 
+    REPORT["chats"] = chats
     a = c.chat(chats["assignment"], "Create an assignment of 6 questions on TCP congestion control and flow control, "
                                     "mixing numericals and conceptual questions, 5 marks each.")
     check("assignment generated", len(a["text"]) > 800 and not a["error"], f"{len(a['text'])} chars")
     check("assignment grounded in slides", len(a["sources"]) > 0,
           "; ".join(f"{s['filename'][:30]} p{s['page_start']}" for s in a["sources"][:4]))
+    REPORT["assignment_message_id"] = a["meta"].get("assistant_message_id")
     REPORT["assignment_sample"] = a["text"][:1500]
 
     att = c.json("POST", f"/courses/{course_id}/attachments", files={"file": ("Assignment - 1_CN & IOT_2026.pdf",
@@ -130,6 +135,8 @@ def run(course_id: str | None, skip_slides: bool) -> None:
           and "Institute Name" not in p["text"])
     pk = c.chat(chats["paper"], "Now write the complete answer key for this paper.")
     check("answer key generated in same chat", len(pk["text"]) > 800, f"{len(pk['text'])} chars")
+    REPORT["paper_message_id"] = p["meta"].get("assistant_message_id")
+    REPORT["paper_key_message_id"] = pk["meta"].get("assistant_message_id")
     REPORT["paper_sample"] = p["text"][:1500]
 
     q = c.chat(chats["ask"], "Explain Nagle's algorithm briefly.")
@@ -166,7 +173,8 @@ def run(course_id: str | None, skip_slides: bool) -> None:
     ids = {}
     for who, f in (("ananya", "t2_student_ananya.pdf"), ("parth", "t2_student_parth.pdf")):
         ids[who] = c.json("POST", f"/exams/{exam_id}/papers", files=files(DATA / f))["id"]
-    papers = poll(lambda: c.json("GET", f"/exams/{exam_id}/papers"), lambda ps: all(p["status"] == "ready" for p in ps))
+    REPORT["student_ids"] = ids
+    papers = poll(lambda: c.json("GET", f"/exams/{exam_id}/papers"), lambda ps: all(p["status"] in ("ready", "failed") for p in ps))
     names = {p["id"]: (p["student_name"], p["enrollment_no"]) for p in papers}
     check("student names read from page 1", "Ananya" in (names[ids["ananya"]][0] or "") and
           "Parth" in (names[ids["parth"]][0] or ""), str(list(names.values())))
@@ -232,6 +240,7 @@ def run(course_id: str | None, skip_slides: bool) -> None:
 
     print("7. Assignment checked against a generated solution", flush=True)
     ex2 = c.json("POST", "/exams", json={"course_id": course_id, "title": "Evaluative Assignment 1", "kind": "Assignment"})["id"]
+    REPORT["assignment_exam_id"] = ex2
     c.call("POST", f"/exams/{ex2}/paper", files=files(DATA / "assignment1.pdf"))
     e2 = poll(lambda: c.json("GET", f"/exams/{ex2}"), lambda e: e["paper_status"] in ("ready", "failed"))
     check("assignment read as question paper", e2["paper_status"] == "ready" and float(e2["total_marks"] or 0) > 0,
@@ -240,7 +249,8 @@ def run(course_id: str | None, skip_slides: bool) -> None:
     e2 = poll(lambda: c.json("GET", f"/exams/{ex2}"), lambda e: e["key_status"] in ("ready", "failed"))
     check("generated solution used as answer key", e2["key_status"] == "ready", f"{len(e2['key_items'])} items")
     sp = c.json("POST", f"/exams/{ex2}/papers", files=files(DATA / "assignment1_student_answers.pdf"))["id"]
-    poll(lambda: c.json("GET", f"/papers/{sp}"), lambda p: p["status"] == "ready")
+    REPORT["assignment_student_id"] = sp
+    poll(lambda: c.json("GET", f"/papers/{sp}"), lambda p: p["status"] in ("ready", "failed"))
     c.call("POST", f"/papers/{sp}/check")
     d2 = poll(lambda: c.json("GET", f"/papers/{sp}"), lambda p: p["status"] in ("checked", "failed"), timeout=900)
     check("real handwritten assignment checked", d2["status"] == "checked" and float(d2["total_marks"] or 0) > 0,
@@ -253,13 +263,18 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--course")
     ap.add_argument("--skip-slides", action="store_true")
+    ap.add_argument("--api", default=API, help="Explicit target API, including /api")
+    ap.add_argument("--report", type=Path, default=REPORT_PATH)
     args = ap.parse_args()
+    API = args.api.rstrip('/')
+    REPORT_PATH = args.report.resolve()
+    REPORT['api'] = API
     try:
         run(args.course, args.skip_slides)
-    except AssertionError as e:
+    except Exception as e:
         check("run completed", False, str(e))
     failed = [c for c in REPORT["checks"] if not c["ok"]]
-    out = ROOT / ".work" / "e2e-report.json"
+    out = REPORT_PATH
     out.parent.mkdir(exist_ok=True)
     out.write_text(json.dumps(REPORT, indent=2, default=str))
     print(f"\n{len(REPORT['checks']) - len(failed)}/{len(REPORT['checks'])} checks passed. Report: {out}")

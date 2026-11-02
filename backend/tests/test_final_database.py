@@ -76,6 +76,10 @@ async def test_manual_preserves_partial_marks_and_requires_completion(database):
     )
     r = await c.post(f"/api/papers/{pid}/manual")
     assert r.status_code == 200
+    p = await db.fetch_one('select status,total_marks from student_papers where id=%s',pid)
+    assert p['status']=='ready' and p['total_marks'] is None
+    ex = (await c.get(f'/api/exams/{eid}')).json()
+    assert all(x['status']!='checked' for x in ex['papers'])
     rows = await db.fetch_all(
         "select * from paper_marks where paper_id=%s order by question_number", pid
     )
@@ -232,3 +236,17 @@ async def test_maximum_edit_preserves_concurrent_teacher_correction(database):
         "select final_marks,max_marks from paper_marks where paper_id=%s", pid
     )
     assert row["final_marks"] == 4 and row["max_marks"] == 6
+
+
+@pytest.mark.asyncio
+async def test_upload_inherits_sample_class_flag(database,monkeypatch):
+    from app.routers import papers
+    uid,cid,eid,pid,c=database
+    await db.execute('update courses set is_sample=true where id=%s',cid)
+    async def stored(*args,**kwargs):return ('fixture.pdf','test/original.pdf',['test/page-1.jpg'])
+    monkeypatch.setattr(papers.uploads,'store_as_pages',stored)
+    monkeypatch.setattr(papers.tasks,'run_in_background',lambda *a,**k:None)
+    r=await c.post(f'/api/exams/{eid}/papers',files={'files':('fixture.pdf',b'local fixture')})
+    assert r.status_code==201
+    row=await db.fetch_one('select is_sample from student_papers where id=%s',r.json()['id'])
+    assert row['is_sample'] is True
