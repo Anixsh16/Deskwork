@@ -1,64 +1,48 @@
-"""Local ChromaDB store for slide chunks. One collection, filtered by course."""
-
+"""Vector-store adapter. Queries are always scoped to course AND embedding model."""
 import asyncio
-import logging
-from functools import lru_cache
-
-import chromadb
-from chromadb.api.client import SharedSystemClient
-
+import httpx
 from .config import get_settings
 
-COLLECTION = "slides"
-log = logging.getLogger("deskwork.vectorstore")
+async def pinecone_call(path,body):
+    s=get_settings()
+    if not s.pinecone_api_key or not s.pinecone_host:
+        raise RuntimeError('Pinecone is selected but its API key or host is missing.')
+    async with httpx.AsyncClient(timeout=60) as client:
+        for attempt in range(4):
+            r=await client.post('https://'+s.pinecone_host.removeprefix('https://').rstrip('/')+path,
+                headers={'Api-Key':s.pinecone_api_key,'X-Pinecone-API-Version':'2025-10'},json=body)
+            if r.status_code in (429,500,502,503,504) and attempt<3:
+                await asyncio.sleep(2**attempt);continue
+            r.raise_for_status()
+            return r.json() if r.content else {}
 
+async def add(ids,embeddings,texts,metas):
+    s=get_settings()
+    if s.vector_provider=='chroma':
+        from . import chroma_store
+        return await chroma_store.add(ids,embeddings,texts,metas)
+    for start in range(0,len(ids),50):
+        vectors=[{'id':i,'values':list(v),'metadata':{**m,'text':t}} for i,v,t,m in zip(ids[start:start+50],embeddings[start:start+50],texts[start:start+50],metas[start:start+50])]
+        if vectors:await pinecone_call('/vectors/upsert',{'namespace':s.pinecone_namespace,'vectors':vectors})
 
-@lru_cache
-def _collection():
-    path = get_settings().data_dir / "chroma"
-    path.mkdir(parents=True, exist_ok=True)
-    client = chromadb.PersistentClient(path=str(path))
-    return client.get_or_create_collection(COLLECTION, metadata={"hnsw:space": "cosine"})
+async def delete_where(where):
+    s=get_settings()
+    if s.vector_provider=='chroma':
+        from . import chroma_store
+        return await chroma_store.delete_where(where)
+    if not where:raise ValueError('A scoped deletion filter is required.')
+    await pinecone_call('/vectors/delete',{'namespace':s.pinecone_namespace,'filter':where})
 
-
-async def _run(method: str, **kwargs):
-    """Runs a collection call; if the index files were removed underneath us (for example by a data reset),
-    reopen the index once and retry."""
-    for attempt in range(2):
-        try:
-            return await asyncio.to_thread(getattr(_collection(), method), **kwargs)
-        except Exception:
-            if attempt:
-                raise
-            log.warning("Slide index unavailable, reopening it")
-            _collection.cache_clear()
-            SharedSystemClient.clear_system_cache()
-
-
-async def add(ids: list[str], embeddings: list[list[float]], texts: list[str], metas: list[dict]) -> None:
-    if ids:
-        await _run("upsert", ids=ids, embeddings=embeddings, documents=texts, metadatas=metas)
-
-
-async def delete_where(where: dict) -> None:
-    await _run("delete", where=where)
-
-
-async def query(course_id: str, embeddings: list[list[float]], per_query: int, embed_model: str) -> list[dict]:
-    """Best matches across several query vectors, de-duplicated, best first.
-    Only chunks embedded with the same model are comparable, so the search is limited to that model."""
-    if not embeddings:
-        return []
-    res = await _run(
-        "query",
-        query_embeddings=embeddings,
-        n_results=per_query,
-        where={"$and": [{"course_id": course_id}, {"embed_model": embed_model}]},
-        include=["documents", "metadatas", "distances"],
-    )
-    best: dict[str, dict] = {}
-    for ids, docs, metas, dists in zip(res["ids"], res["documents"], res["metadatas"], res["distances"]):
-        for id_, doc, meta, dist in zip(ids, docs, metas, dists):
-            if id_ not in best or dist < best[id_]["distance"]:
-                best[id_] = {"id": id_, "text": doc, "distance": dist, **meta}
-    return sorted(best.values(), key=lambda r: r["distance"])
+async def query(course_id,embeddings,per_query,embed_model):
+    s=get_settings()
+    if s.vector_provider=='chroma':
+        from . import chroma_store
+        return await chroma_store.query(course_id,embeddings,per_query,embed_model)
+    best={}
+    for v in embeddings:
+        result=await pinecone_call('/query',{'namespace':s.pinecone_namespace,'vector':list(v),'topK':per_query,
+          'includeMetadata':True,'filter':{'$and':[{'course_id':{'$eq':str(course_id)}},{'embed_model':{'$eq':embed_model}}]}})
+        for hit in result.get('matches',[]):
+            row={'id':hit['id'],**hit.get('metadata',{}),'distance':1-float(hit['score'])}
+            if row['id'] not in best or row['distance']<best[row['id']]['distance']:best[row['id']]=row
+    return sorted(best.values(),key=lambda r:r['distance'])

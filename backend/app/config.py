@@ -1,6 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 
+from typing import Literal
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
@@ -28,8 +29,16 @@ class Settings(BaseSettings):
     embed_rpm: int = 80
     embed_tpm: int = 24000
 
+    vector_provider: Literal['chroma','pinecone'] = 'chroma'
+    pinecone_api_key: str = ''
+    pinecone_host: str = ''
+    pinecone_namespace: str = 'deskwork-v1'
     storage_bucket: str = "deskwork"
     data_dir: Path = BACKEND_DIR / "data"
+
+    @property
+    def frontend_origins(self) -> list[str]:
+        return [o.strip().rstrip('/') for o in self.frontend_origin.split(',') if o.strip()]
 
     @property
     def api_keys(self) -> list[str]:

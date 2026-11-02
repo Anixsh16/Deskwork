@@ -167,9 +167,15 @@ def inline_schema(model: type[BaseModel]) -> dict:
         if isinstance(node, dict):
             if "$ref" in node:
                 return resolve(defs[node["$ref"].split("/")[-1]])
-            return {k: resolve(v) for k, v in node.items() if k != "title"}
-        if isinstance(node, list):
-            return [resolve(v) for v in node]
+            out = {}
+            for k,v in node.items():
+                if k in ('title','default','exclusiveMinimum','exclusiveMaximum','minLength','maxLength','minimum','maximum','minItems','maxItems'):
+                    continue  # provider subset; full constraints still validated by Pydantic
+                if k == 'properties':
+                    out[k] = {name:resolve(value) for name,value in v.items()}
+                else:out[k] = resolve(v)
+            return out
+        if isinstance(node, list): return [resolve(v) for v in node]
         return node
 
     return resolve(schema)

@@ -39,6 +39,7 @@ class QuestionIn(BaseModel):
     number: int = Field(ge=1, le=100)
     text: str
     marks: float = Field(ge=0, le=100)
+    topic: str | None = None
     co: str | None = None
     has_figure: bool = False
     parts: list[PartIn] = []
@@ -89,7 +90,7 @@ async def _with_urls(paths: list[str]) -> list[str]:
 async def get_exam(exam_id: str, teacher: Teacher = Depends(current_teacher)):
     exam = await access.exam(teacher, exam_id)
     exam["questions"] = await db.fetch_all(
-        "select number, text, marks, co, has_figure, parts from exam_questions where exam_id = %s order by number",
+        "select number, text, marks, co, has_figure, parts, topic from exam_questions where exam_id = %s order by number",
         exam_id,
     )
     exam["key_items"] = await db.fetch_all(
@@ -123,16 +124,25 @@ async def delete_exam(exam_id: str, teacher: Teacher = Depends(current_teacher))
 
 
 async def _claim(exam_id: str, column: str, extra: str = "") -> str:
-    """Marks the paper or key as being read, atomically, so double submits cannot run twice."""
-    row = await db.fetch_one(
-        f"""update exams e set {column} = 'processing' from (select {column} as before from exams where id = %s) old
-            where e.id = %s and e.{column} <> 'processing' and e.key_status <> 'processing' {extra}
-            returning old.before""",
-        exam_id, exam_id,
-    )
-    if not row:
-        raise HTTPException(409, "The question paper or answer key is still being read. Please wait a moment.")
-    return row["before"]
+    if column not in ('paper_status','key_status'): raise ValueError('Invalid status field')
+    async with db.transaction() as conn:
+        await lock_exam_for_edit(conn,exam_id)
+        exam=await (await conn.execute('select * from exams where id=%s',(exam_id,))).fetchone()
+        if column=='key_status' and exam['paper_status']!='ready':
+            raise HTTPException(409,'Read the question paper first.')
+        before=exam[column]
+        await conn.execute(f"update exams set {column}='processing' where id=%s",(exam_id,))
+        return before
+
+
+async def lock_exam_for_edit(conn, exam_id: str):
+    exam = await (await conn.execute('select * from exams where id=%s for update',(exam_id,))).fetchone()
+    if 'processing' in (exam['paper_status'],exam['key_status']):
+        raise HTTPException(409,'Wait for the question paper and key to finish reading.')
+    if await (await conn.execute("select 1 from student_papers where exam_id=%s and status='checking'",(exam_id,))).fetchone():
+        raise HTTPException(409,'Wait for checking to finish before editing the exam.')
+    if await (await conn.execute("select 1 from question_batches where exam_id=%s and status in ('queued','processing')",(exam_id,))).fetchone():
+        raise HTTPException(409,'Wait for question-wise checking to finish.')
 
 
 async def _release(exam_id: str, column: str, before: str) -> None:
@@ -227,11 +237,13 @@ async def key_from_message(exam_id: str, body: FromMessage, teacher: Teacher = D
 async def reparse(exam_id: str, what: str, teacher: Teacher = Depends(current_teacher)):
     exam = await access.exam(teacher, exam_id)
     if what == "paper" and (exam["paper_pages"] or exam["paper_text"]) and exam["paper_status"] != "processing":
-        await db.execute("update exams set paper_status = 'processing', paper_error = null where id = %s", exam_id)
+        await _claim(exam_id,'paper_status')
+        await db.execute("update exams set paper_error = null where id = %s", exam_id)
         tasks.run_in_background(f"paper-{exam_id}", lambda: exam_service.parse_question_paper(exam_id))
     elif what == "key" and (exam["key_pages"] or exam["key_text"]) and exam["key_status"] != "processing" \
             and exam["paper_status"] == "ready":
-        await db.execute("update exams set key_status = 'processing', key_error = null where id = %s", exam_id)
+        await _claim(exam_id,'key_status')
+        await db.execute("update exams set key_error = null where id = %s", exam_id)
         tasks.run_in_background(f"key-{exam_id}", lambda: exam_service.parse_answer_key(exam_id))
     else:
         raise HTTPException(409, "Nothing to read again right now.")
@@ -256,18 +268,26 @@ async def save_questions(exam_id: str, body: list[QuestionIn], teacher: Teacher 
             raise HTTPException(400, f"Q{q.number}: every sub-part needs its own label (a, b, c...).")
         if q.parts and abs(sum(p.marks for p in q.parts) - q.marks) > 1e-6:
             raise HTTPException(400, f"Q{q.number}: sub-part marks must add up to {q.marks:g}.")
+    if await db.fetch_one("select 1 from question_batches where exam_id=%s and status in ('queued','processing')",exam_id):
+        raise HTTPException(409,'Wait for question-wise checking to finish.')
     old_questions = await db.fetch_all("select * from exam_questions where exam_id = %s", exam_id)
+    for q in body:
+        if q.topic is None: q.topic=next((x.get('topic') for x in old_questions if x['number']==q.number),None)
     old_items = {i.key: i.max_marks for i in exam_service.grading_items(old_questions)}
     new_items = {i.key: i.max_marks for i in exam_service.grading_items([q.model_dump() for q in body])}
     key_rows = await db.fetch_all("select * from answer_key_items where exam_id = %s", exam_id)
     reset = 0
     async with db.transaction() as conn:
+        await lock_exam_for_edit(conn,exam_id)
+        old_questions=await (await conn.execute('select * from exam_questions where exam_id=%s',(exam_id,))).fetchall()
+        old_items={i.key:i.max_marks for i in exam_service.grading_items(old_questions)}
+        key_rows=await (await conn.execute('select * from answer_key_items where exam_id=%s',(exam_id,))).fetchall()
         await conn.execute("delete from exam_questions where exam_id = %s", (exam_id,))
         for q in body:
             await conn.execute(
-                """insert into exam_questions (exam_id, number, text, marks, co, has_figure, parts)
-                   values (%s, %s, %s, %s, %s, %s, %s)""",
-                (exam_id, q.number, q.text, q.marks, q.co, q.has_figure, db.jsonb([p.model_dump() for p in q.parts])),
+                """insert into exam_questions (exam_id, number, text, marks, co, has_figure, parts, topic)
+                   values (%s, %s, %s, %s, %s, %s, %s, %s)""",
+                (exam_id, q.number, q.text, q.marks, q.co, q.has_figure, db.jsonb([p.model_dump() for p in q.parts]),q.topic),
             )
         await conn.execute(
             "update exams set total_marks = %s, paper_notice = null, updated_at = now() where id = %s",
@@ -304,6 +324,13 @@ async def save_key(exam_id: str, body: list[KeyItemIn], teacher: Teacher = Depen
         if abs(sum(p.marks for p in k.marking_points) - it.max_marks) > 1e-6:
             raise HTTPException(400, f"{it.name}: marking points must add up to {it.max_marks:g}.")
     async with db.transaction() as conn:
+        await lock_exam_for_edit(conn,exam_id)
+        questions=await (await conn.execute('select * from exam_questions where exam_id=%s',(exam_id,))).fetchall()
+        items={i.key:i for i in exam_service.grading_items(questions)}
+        for k in body:
+            item=items.get((k.question_number,k.part_label))
+            if not item or abs(sum(p.marks for p in k.marking_points)-item.max_marks)>1e-6:
+                raise HTTPException(409,'Question marks changed. Reload the marking scheme.')
         for k in body:
             await conn.execute(
                 """update answer_key_items set answer = %s, final_answer = %s, marking_points = %s
@@ -316,7 +343,7 @@ async def save_key(exam_id: str, body: list[KeyItemIn], teacher: Teacher = Depen
 
 async def _papers(exam_id: str) -> list[dict]:
     papers = await db.fetch_all(
-        """select id, student_name, enrollment_no, batch, filename, status, error, total_marks, flagged_count,
+        """select id, student_name, enrollment_no, batch, filename, status, error, total_marks, flagged_count, is_sample,
              checked_by, checked_at, reviewed_at, created_at, jsonb_array_length(pages) as page_count
            from student_papers where exam_id = %s order by created_at""",
         exam_id,

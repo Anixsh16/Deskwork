@@ -11,6 +11,7 @@ import sys
 import httpx
 
 from app.config import get_settings
+from app import vectorstore
 
 TABLES = [
     "mark_edits", "grading_runs", "paper_marks", "student_papers", "answer_key_items", "exam_questions", "exams",
@@ -23,6 +24,9 @@ async def main() -> None:
 
     s = get_settings()
     async with await psycopg.AsyncConnection.connect(s.database_url, autocommit=True) as conn:
+        if s.vector_provider == 'pinecone':
+            ids = await (await conn.execute('select id from courses')).fetchall()
+            for row in ids: await vectorstore.delete_where({'course_id':str(row[0])})
         counts = {}
         for t in TABLES:
             cur = await conn.execute(f"delete from {t}")

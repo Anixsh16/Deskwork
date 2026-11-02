@@ -10,9 +10,10 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel, Field
 
-from .. import access, db, documents, gemini, storage, uploads
+from .. import access, db, documents, gemini, storage, uploads, tasks
 from ..auth import Teacher, current_teacher
 from ..services import chat as chat_service
+from ..services import bank as bank_service
 from ..services.docx_export import markdown_to_docx
 
 router = APIRouter()
@@ -205,6 +206,9 @@ async def send_message(chat_id: str, body: MessageIn, teacher: Teacher = Depends
                     "update chat_messages set content = %s, sources = %s, status = %s where id = %s",
                     content, db.jsonb(sources), status if content else "failed", bot_msg["id"],
                 )
+                if status == 'done' and content and chat['bot'] in ('assignment','paper'):
+                    await db.execute("insert into bank_imports(message_id) values(%s) on conflict do nothing", bot_msg['id'])
+                    tasks.run_in_background(f"bank-{bot_msg['id']}",lambda:bank_service.import_message(str(bot_msg['id'])))
 
     return StreamingResponse(stream(), media_type="text/event-stream", headers={"Cache-Control": "no-cache"})
 

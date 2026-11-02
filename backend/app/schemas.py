@@ -13,6 +13,7 @@ class ParsedQuestion(BaseModel):
     number: int = Field(description="Question number as printed, e.g. 1 for Q1.")
     text: str = Field(description="Full question stem text, including given data, tables written as text.")
     marks: float = Field(description="Total marks printed for the whole question.")
+    topic: str | None = Field(default=None, description="Short topic name based on the question content.")
     co: str | None = Field(default=None, description="Course outcome tag printed next to the question, e.g. 'CO3'.")
     has_figure: bool = Field(description="True if the question relies on a figure, diagram or image.")
     parts: list[ParsedPart] = Field(description="Sub-parts in order; empty if the question has none.")

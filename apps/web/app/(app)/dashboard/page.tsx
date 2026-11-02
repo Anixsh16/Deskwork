@@ -1,7 +1,15 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, BookOpen, ClipboardCheck, FileQuestion, Library, NotebookPen, PenLine } from "lucide-react";
+import {
+  ArrowRight,
+  BookOpen,
+  ClipboardCheck,
+  FileQuestion,
+  Library,
+  NotebookPen,
+  PenLine,
+} from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { useState } from "react";
@@ -10,7 +18,6 @@ import { CourseCard } from "@/components/course-card";
 import { CreateCourseDialog } from "@/components/create-course-dialog";
 import { CreateExamDialog } from "@/components/create-exam-dialog";
 import { ExamRow } from "@/components/exam-row";
-import { ComingSoon } from "@/components/ui/coming-soon";
 import { EmptyState, Skeleton } from "@/components/ui/primitives";
 import { api } from "@/lib/api";
 import type { CourseSummary, ExamSummary, Teacher } from "@/lib/types";
@@ -20,7 +27,8 @@ export default function Dashboard() {
   const me = useQuery({ queryKey: ["me"], queryFn: () => api<Teacher>("/me") });
   const data = useQuery({
     queryKey: ["dashboard"],
-    queryFn: () => api<{ courses: CourseSummary[]; exams: ExamSummary[] }>("/dashboard"),
+    queryFn: () =>
+      api<{ courses: CourseSummary[]; exams: ExamSummary[] }>("/dashboard"),
   });
   const [newCourse, setNewCourse] = useState(false);
   const [newExam, setNewExam] = useState(false);
@@ -63,30 +71,47 @@ export default function Dashboard() {
 
   return (
     <div className="mx-auto max-w-6xl">
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
         <h1 className="text-[32px] font-normal tracking-[-0.015em] text-ink">
           {greeting()}
           {first ? `, ${first}` : ""}
         </h1>
-        <p className="mt-1 text-[15px] text-muted">What would you like to get off your desk today?</p>
+        <p className="mt-1 text-[15px] text-muted">
+          What would you like to get off your desk today?
+        </p>
       </motion.div>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {actions.map((a, i) => {
           const inner = (
             <>
-              <span className={`flex size-11 items-center justify-center rounded-2xl ${a.tint}`}>
+              <span
+                className={`flex size-11 items-center justify-center rounded-2xl ${a.tint}`}
+              >
                 <a.icon className="size-5" />
               </span>
-              <span className="mt-4 block text-[15px] font-medium text-ink">{a.title}</span>
-              <span className="mt-1 block text-[13px] leading-relaxed text-muted">{a.body}</span>
+              <span className="mt-4 block text-[15px] font-medium text-ink">
+                {a.title}
+              </span>
+              <span className="mt-1 block text-[13px] leading-relaxed text-muted">
+                {a.body}
+              </span>
               <ArrowRight className="absolute top-5 right-5 size-4 text-faint opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-100" />
             </>
           );
           const cls =
             "group relative block rounded-3xl border border-line-soft bg-surface p-5 text-left shadow-card transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lift";
           return (
-            <motion.div key={a.title} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 * i + 0.1 }}>
+            <motion.div
+              key={a.title}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 * i + 0.1 }}
+            >
               {a.href ? (
                 <Link href={a.href} className={cls}>
                   {inner}
@@ -105,7 +130,10 @@ export default function Dashboard() {
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-normal text-ink">Exams</h2>
           {!!data.data?.exams.length && (
-            <Link href="/exams" className="text-sm font-medium text-brand hover:underline">
+            <Link
+              href="/exams"
+              className="text-sm font-medium text-brand hover:underline"
+            >
               View all
             </Link>
           )}
@@ -136,7 +164,10 @@ export default function Dashboard() {
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-normal text-ink">Courses</h2>
           {!!data.data?.courses.length && (
-            <Link href="/courses" className="text-sm font-medium text-brand hover:underline">
+            <Link
+              href="/courses"
+              className="text-sm font-medium text-brand hover:underline"
+            >
               View all
             </Link>
           )}
@@ -166,8 +197,30 @@ export default function Dashboard() {
       <section className="mt-12">
         <h2 className="mb-4 text-lg font-normal text-ink">More tools</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <ComingSoon variant="card" label="Plan a lesson" description="Lecture plans built from your slides." icon={<NotebookPen />} />
-          <ComingSoon variant="card" label="Question bank" description="Reuse questions across papers and exams." icon={<Library />} />
+          {[
+            {
+              href: "/lesson-planner",
+              title: "Plan a lesson",
+              body: "Lecture plans built from your slides.",
+              Icon: NotebookPen,
+            },
+            {
+              href: "/question-bank",
+              title: "Question bank",
+              body: "Reuse questions across papers and exams.",
+              Icon: Library,
+            },
+          ].map(({ href, title, body, Icon }) => (
+            <Link
+              key={href}
+              href={href}
+              className="rounded-3xl border border-line-soft p-6 transition-shadow hover:shadow-lift"
+            >
+              <Icon className="mb-4 size-6 text-brand" />
+              <h3 className="font-medium">{title}</h3>
+              <p className="mt-1 text-sm text-muted">{body}</p>
+            </Link>
+          ))}
         </div>
       </section>
 

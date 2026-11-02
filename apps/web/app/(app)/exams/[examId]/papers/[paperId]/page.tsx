@@ -251,7 +251,7 @@ function PaperView({ examId, paperId }: { examId: string; paperId: string }) {
               <div className="text-[15px] font-medium text-ink">{p.status === "reading" ? "Reading the first page" : "Two AI checkers are marking this paper"}</div>
               <div className="max-w-sm text-sm text-muted">Every page is compared with your answer key, question by question. This usually takes under a minute.</div>
             </Card>
-          ) : p.status !== "checked" ? (
+          ) : p.status !== "checked" && p.marks.length === 0 ? (
             <Card className="flex flex-col items-center gap-4 px-6 py-12 text-center">
               <StatusPill status={p.status} labels={{ ready: "Not checked yet" }} />
               {p.error && <p className="text-sm text-bad">{p.error}</p>}

@@ -51,7 +51,7 @@ def access_token() -> str:
 def signin_link() -> str:
     with httpx.Client(timeout=30) as client:
         token_hash = _hashed_token(client, _email())
-    return f"{get_settings().frontend_origin}/auth/confirm?token_hash={token_hash}&type=magiclink"
+    return f"{get_settings().frontend_origins[0]}/auth/confirm?token_hash={token_hash}&type=magiclink"
 
 
 if __name__ == "__main__":

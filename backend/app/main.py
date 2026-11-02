@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 
 from . import db
 from .config import get_settings
-from .routers import chats, courses, exams, papers
+from .routers import chats, courses, exams, papers, plans, bank, analytics, question_checks
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
@@ -33,20 +33,32 @@ async def _recover_interrupted_work() -> None:
         "where status = 'checking'"
     )
     await db.execute("update chat_messages set status = 'failed' where status = 'streaming'")
+    await db.execute("update lesson_plans set status='failed',error='Planning was interrupted. Retry to continue.' where status in ('queued','processing')")
+    await db.execute("update bank_imports set status='failed',error='Collection interrupted. Retry collection.' where status in ('queued','processing')")
+    await db.execute("update question_batches set status='failed',error='Checking interrupted. Completed marks are saved.' where status in ('queued','processing')")
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     await db.open_pool()
-    await _recover_interrupted_work()
-    yield
-    await db.close_pool()
+    # Local and deployed APIs may coexist. Never reset another live server's jobs on startup.
+    lease = await psycopg.AsyncConnection.connect(get_settings().database_url, autocommit=True)
+    try:
+        acquired = (await (await lease.execute('select pg_try_advisory_lock(684173201)')).fetchone())[0]
+        if acquired:
+            await _recover_interrupted_work()
+        await lease.execute('select pg_advisory_lock_shared(684173201)')
+        if acquired: await lease.execute('select pg_advisory_unlock(684173201)')
+        yield
+    finally:
+        await lease.close()
+        await db.close_pool()
 
 
 app = FastAPI(title="Deskwork API", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[get_settings().frontend_origin],
+    allow_origins=get_settings().frontend_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -59,7 +71,7 @@ async def bad_id(_: Request, __: Exception):
     return JSONResponse({"detail": "Not found."}, status_code=404)
 
 
-for r in (courses.router, chats.router, exams.router, papers.router):
+for r in (courses.router, chats.router, exams.router, papers.router, plans.router, bank.router, analytics.router, question_checks.router):
     app.include_router(r, prefix="/api")
 
 

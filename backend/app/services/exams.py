@@ -113,10 +113,10 @@ async def parse_question_paper(exam_id: str) -> None:
             await reset_checked_papers(conn, exam_id)
             for q in paper.questions:
                 await conn.execute(
-                    """insert into exam_questions (exam_id, number, text, marks, co, has_figure, parts)
-                       values (%s, %s, %s, %s, %s, %s, %s)""",
+                    """insert into exam_questions (exam_id, number, text, marks, co, has_figure, parts, topic)
+                       values (%s, %s, %s, %s, %s, %s, %s, %s)""",
                     (exam_id, q.number, q.text, q.marks, q.co, q.has_figure,
-                     db.jsonb([p.model_dump() for p in q.parts])),
+                     db.jsonb([p.model_dump() for p in q.parts]),q.topic),
                 )
             await conn.execute(
                 """update exams set paper_status = 'ready', paper_error = null, paper_notice = %s, total_marks = %s,
@@ -337,13 +337,22 @@ def merge_grades(items: list[Item], primary: GradedPaper | None, second: GradedP
     return rows
 
 
-async def grade_paper(paper_id: str) -> None:
+async def grade_paper(paper_id: str, question_number: int | None = None) -> bool:
     s = get_settings()
     try:
         paper = await db.fetch_one("select * from student_papers where id = %s", paper_id)
         questions = await db.fetch_all("select * from exam_questions where exam_id = %s", paper["exam_id"])
         key_items = await db.fetch_all("select * from answer_key_items where exam_id = %s", paper["exam_id"])
+        all_items = grading_items(questions)
+        if question_number is not None:
+            questions = [q for q in questions if q['number'] == question_number]
+            key_items = [k for k in key_items if k['question_number'] == question_number]
         items = grading_items(questions)
+        if question_number is not None:
+            previous = await db.fetch_all("select question_number,part_label,final_marks from paper_marks where paper_id=%s",paper_id)
+            done = {(r['question_number'],r['part_label']) for r in previous if r['final_marks'] is not None}
+            items = [i for i in items if i.key not in done]
+        if not items: raise ValueError('No unchecked items remain')
         parts = await _page_parts(paper["pages"])
         parts.append(gemini.text_part(_items_block(questions, items) + "\n\n" + _key_block(key_items)))
 
@@ -364,31 +373,43 @@ async def grade_paper(paper_id: str) -> None:
         rows = merge_grades(items, a, b)
         main = a or b
         async with db.transaction() as conn:
-            await conn.execute("delete from paper_marks where paper_id = %s", (paper_id,))
+            current = await (await conn.execute("select * from student_papers where id=%s for update",(paper_id,))).fetchone()
+            if not current or current['status'] != 'checking': raise ValueError('Paper changed during checking')
+            if question_number is None:
+                if await (await conn.execute("select 1 from paper_marks where paper_id=%s and source='teacher' limit 1",(paper_id,))).fetchone():
+                    raise ValueError('Teacher marks changed; refusing to replace them')
+                await conn.execute("delete from paper_marks where paper_id = %s", (paper_id,))
+            else:
+                await conn.execute("delete from paper_marks where paper_id=%s and question_number=%s and final_marks is null", (paper_id,question_number))
             for r in rows:
                 await conn.execute(
                     """insert into paper_marks (paper_id, question_number, part_label, max_marks, attempted, marks_a,
                        marks_b, final_marks, flagged, flag_reason, student_answer, reasoning, reasoning_b, mistakes,
                        confidence, pages)
-                       values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                       values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                       on conflict(paper_id,question_number,part_label) do nothing""",
                     (paper_id, r["question_number"], r["part_label"], r["max_marks"], r["attempted"], r["marks_a"],
                      r["marks_b"], r["final_marks"], r["flagged"], r["flag_reason"], r["student_answer"],
                      r["reasoning"], r["reasoning_b"], db.jsonb(r["mistakes"]), r["confidence"], db.jsonb(r["pages"])),
                 )
+            cur = await conn.execute("select * from paper_marks where paper_id=%s", (paper_id,))
+            all_marks = await cur.fetchall()
+            complete = {(r['question_number'], r['part_label']) for r in all_marks if r['final_marks'] is not None} == {i.key for i in all_items}
             await conn.execute(
-                """update student_papers set status = 'checked', checked_by = 'ai', checked_at = now(), error = null,
-                   reviewed_at = null, summary = %s, total_marks = %s, flagged_count = %s,
-                   student_name = coalesce(student_name, %s), enrollment_no = coalesce(enrollment_no, %s)
-                   where id = %s""",
-                (main.overall_feedback, sum(r["final_marks"] or 0 for r in rows), sum(r["flagged"] for r in rows),
-                 main.student_name, main.enrollment_no, paper_id),
-            )
+                """update student_papers set status=%s, checked_by='ai', checked_at=now(),error=null,
+                   reviewed_at=null, summary=%s,total_marks=%s,flagged_count=%s,
+                   student_name=coalesce(student_name,%s),enrollment_no=coalesce(enrollment_no,%s) where id=%s""",
+                ('checked' if complete else 'ready', main.overall_feedback if question_number is None else 'Question-wise checking. Review each completed question below.',
+                 sum(float(r['final_marks'] or 0) for r in all_marks) if complete else None,
+                 sum(r['flagged'] for r in all_marks), main.student_name,main.enrollment_no,paper_id))
+        return True
     except Exception as e:
         log.exception("Grading failed for %s", paper_id)
         await db.execute(
             "update student_papers set status = 'failed', error = %s where id = %s",
             "The AI could not check this paper right now. Please try again.", paper_id,
         )
+        return False
 
 
 async def reset_checked_papers(conn, exam_id: str) -> int:
@@ -396,7 +417,7 @@ async def reset_checked_papers(conn, exam_id: str) -> int:
     cur = await conn.execute(
         """update student_papers set status = 'ready', checked_by = null, checked_at = null, reviewed_at = null,
            total_marks = null, flagged_count = 0, summary = null, error = null
-           where exam_id = %s and status in ('checked', 'failed') returning id""",
+           where exam_id = %s and status in ('ready','checked', 'failed') returning id""",
         (exam_id,),
     )
     ids = [r["id"] for r in await cur.fetchall()]
@@ -426,20 +447,21 @@ async def apply_new_maximums(conn, exam_id: str, maximums: dict[tuple[int, str],
         )
         papers.add(r["paper_id"])
     for pid in papers:
-        await conn.execute(
-            """update student_papers p set
-                 total_marks = (select sum(final_marks) from paper_marks m where m.paper_id = p.id),
-                 flagged_count = (select count(*) from paper_marks m where m.paper_id = p.id and m.flagged)
-               where p.id = %s""",
-            (pid,),
-        )
+        await recompute_on(conn,str(pid))
+        await conn.execute('update student_papers set reviewed_at=null where id=%s',(pid,))
 
+
+async def recompute_on(conn, paper_id: str) -> None:
+    paper = await (await conn.execute('select * from student_papers where id=%s for update',(paper_id,))).fetchone()
+    questions = await (await conn.execute('select * from exam_questions where exam_id=%s',(paper['exam_id'],))).fetchall()
+    rows = await (await conn.execute('select * from paper_marks where paper_id=%s',(paper_id,))).fetchall()
+    expected = {i.key for i in grading_items(questions)}
+    present = {(r['question_number'],r['part_label']) for r in rows if r['final_marks'] is not None}
+    complete = bool(expected) and expected == present
+    status = 'checked' if complete or paper['checked_by']=='teacher' else 'ready'
+    await conn.execute("""update student_papers set total_marks=%s,flagged_count=%s,status=%s where id=%s""",
+        (sum(float(r['final_marks'] or 0) for r in rows) if complete else None,sum(r['flagged'] for r in rows),status,paper_id))
 
 async def recompute_totals(paper_id: str) -> None:
-    await db.execute(
-        """update student_papers p set
-             total_marks = (select sum(final_marks) from paper_marks m where m.paper_id = p.id),
-             flagged_count = (select count(*) from paper_marks m where m.paper_id = p.id and m.flagged)
-           where p.id = %s""",
-        paper_id,
-    )
+    async with db.transaction() as conn:
+        await recompute_on(conn,paper_id)

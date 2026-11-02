@@ -14,6 +14,10 @@ B.Tech Major Project, Jaypee Institute of Information Technology, Noida.
   3. Two AI checkers (Gemini 3.5 Flash-Lite and 3.1 Flash-Lite) mark every question from the page images.
   4. Deskwork highlights answers where the two checkers disagree or are unsure.
   5. The teacher can change any mark, and results export to Excel.
+- **Question-wise checking.** Check one question across selected students, keep previously marked answers, and review original scans next to the marking scheme.
+- **Class analytics.** Filter by course and exam; view score distributions, question averages and topics to revisit. Synthetic sample records are clearly labelled and can be excluded.
+- **Lesson planner.** Generate lecture sequences from slides with time budgets, examples, practice questions, editing and Word export.
+- **Question bank.** Generated assessment questions are automatically collected with topic/type/difficulty filters, deduplication, editing and reuse in exams.
 - **Teachers only.** Sign-in is Google only, limited to enabled teacher accounts. Students never sign in.
 
 ## Architecture
@@ -23,7 +27,7 @@ B.Tech Major Project, Jaypee Institute of Information Technology, Noida.
 | `apps/web` | Next.js 16 and React 19 web app (Tailwind, Motion), in a Google Workspace style UI |
 | `backend` | FastAPI (Python 3.12): API, PDF and PPTX reading, Gemini calls, grading |
 | Supabase | Google sign-in, Postgres (row level security on), private file storage |
-| ChromaDB | Local vector database for slide search, embeddings from `gemini-embedding-2` |
+| Pinecone | Cloud vector search, scoped by course and embedding model. ChromaDB remains optional for local use. |
 
 ## Team
 
@@ -54,3 +58,14 @@ Open http://localhost:3000 and choose **Continue with Google**. To enable a teac
 | `npm run test:e2e` | Every flow against the running API with real CN & IoT course material |
 | `npm run test:ui` | The same journey in Chrome, with screenshots |
 | `npm run reset` | Clears all app data (sign-in accounts are kept) |
+
+## Final evaluation setup
+
+- Apply `supabase/migrations/0002_final_evaluation.sql` after the initial schema (only with permission for the target database).
+- Set `VECTOR_PROVIDER=pinecone`, `PINECONE_API_KEY` and `PINECONE_HOST` for cloud search. The index uses 768 dimensions and cosine similarity.
+- `npm run seed:samples` adds labelled synthetic classes to the main teacher account without replacing existing work.
+- `npm run test:final` exercises the final features against the running local API. It creates clearly named test plans and exams and uses Gemini quota.
+- `npm run migrate:vectors` copies existing Chroma embeddings to Pinecone without new AI calls.
+- Deploy `apps/web` on Vercel and `backend/Dockerfile` on Render. Set `FRONTEND_ORIGIN` to a comma-separated list of allowed web origins and `NEXT_PUBLIC_API_URL` to the Render URL. Add the Vercel auth callback to Supabase redirect URLs.
+- Run one backend worker per service. Free Render instances can sleep; long jobs interrupted by a restart are shown as failed and can be retried. This release is not a durable multi-worker job system.
+- Local unit/database tests: set `TEST_DATABASE_URL` to a disposable local PostgreSQL. The database tests reject remote hosts.

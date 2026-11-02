@@ -7,7 +7,10 @@
     "test": "cd backend && uv run pytest -q",
     "test:e2e": "cd backend && uv run python -m tests.e2e_flow",
     "test:ui": "npm --prefix apps/web run test:ui",
-    "reset": "cd backend && uv run python -m tools.reset --yes"
+    "reset": "cd backend && uv run python -m tools.reset --yes",
+    "seed:samples": "cd backend && uv run python -m tools.seed_final_samples",
+    "test:final": "cd backend && uv run python -m tests.final_live_flow",
+    "migrate:vectors": "cd backend && uv run python -m tools.migrate_vectors"
   },
   "devDependencies": {
     "concurrently": "^9.2.1"

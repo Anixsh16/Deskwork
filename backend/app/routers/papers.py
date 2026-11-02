@@ -101,14 +101,15 @@ async def delete_paper(paper_id: str, teacher: Teacher = Depends(current_teacher
 
 
 async def _start_check(paper: dict) -> bool:
-    started = await db.fetch_one(
-        """update student_papers set status = 'checking', error = null
-           where id = %s and status in ('ready', 'checked', 'failed') returning id""",
-        paper["id"],
-    )
+    async with db.transaction() as conn:
+        exam=await (await conn.execute('select * from exams where id=%s for update',(paper['exam_id'],))).fetchone()
+        if exam['paper_status']!='ready' or exam['key_status']!='ready': return False
+        if await (await conn.execute("select 1 from question_batches where exam_id=%s and status in ('queued','processing')",(paper['exam_id'],))).fetchone(): return False
+        started=await (await conn.execute("""update student_papers set status='checking',error=null
+          where id=%s and status in ('ready','checked','failed') and not exists(select 1 from paper_marks
+          where paper_id=student_papers.id and source='teacher') returning id""",(paper['id'],))).fetchone()
     if started:
-        pid = str(paper["id"])
-        tasks.run_in_background(f"grade-{pid}", lambda: exam_service.grade_paper(pid))
+        pid=str(paper['id']);tasks.run_in_background(f'grade-{pid}',lambda:exam_service.grade_paper(pid))
     return bool(started)
 
 
@@ -145,11 +146,12 @@ async def start_manual(paper_id: str, teacher: Teacher = Depends(current_teacher
         return {"ok": True}
     questions = await db.fetch_all("select * from exam_questions where exam_id = %s", paper["exam_id"])
     async with db.transaction() as conn:
-        await conn.execute("delete from paper_marks where paper_id = %s", (paper_id,))
+        current = await (await conn.execute("select * from student_papers where id=%s for update",(paper_id,))).fetchone()
+        if current['status'] in ('checking','reading'): raise HTTPException(409,'Wait for processing to finish.')
         for it in exam_service.grading_items(questions):
             await conn.execute(
                 """insert into paper_marks (paper_id, question_number, part_label, max_marks, source, final_marks)
-                   values (%s, %s, %s, %s, 'teacher', null)""",
+                   values (%s, %s, %s, %s, 'teacher', null) on conflict(paper_id,question_number,part_label) do nothing""",
                 (paper_id, it.question_number, it.part_label, it.max_marks),
             )
         await conn.execute(
@@ -161,38 +163,25 @@ async def start_manual(paper_id: str, teacher: Teacher = Depends(current_teacher
 
 @router.patch("/papers/{paper_id}/marks")
 async def set_marks(paper_id: str, body: list[MarkIn], teacher: Teacher = Depends(current_teacher)):
-    paper = await access.paper(teacher, paper_id)
-    if paper["status"] != "checked":
-        raise HTTPException(409, "Check the paper (with AI or manually) before editing marks.")
-    rows = {
-        (r["question_number"], r["part_label"]): r
-        for r in await db.fetch_all("select * from paper_marks where paper_id = %s", paper_id)
-    }
-    for m in body:
-        row = rows.get((m.question_number, m.part_label))
-        if not row:
-            raise HTTPException(400, f"Q{m.question_number}{m.part_label} is not part of this exam.")
-        if m.marks is not None and (m.marks > float(row["max_marks"]) or m.marks * 2 != int(m.marks * 2)):
-            raise HTTPException(400, f"Marks for Q{m.question_number}{m.part_label} must be 0 to {float(row['max_marks']):g}, in steps of 0.5.")
+    await access.paper(teacher,paper_id)
     async with db.transaction() as conn:
+        paper=await (await conn.execute('select * from student_papers where id=%s for update',(paper_id,))).fetchone()
+        if paper['status'] not in ('ready','checked'): raise HTTPException(409,'Wait for checking to finish before editing marks.')
+        rows={(r['question_number'],r['part_label']):r for r in await (await conn.execute('select * from paper_marks where paper_id=%s',(paper_id,))).fetchall()}
         for m in body:
-            row = rows[(m.question_number, m.part_label)]
-            old = row["final_marks"]
-            await conn.execute(
-                """update paper_marks set final_marks = %s, source = 'teacher', flagged = false,
-                   teacher_note = case when %s::text is null then teacher_note else nullif(%s::text, '') end,
-                   updated_at = now()
-                   where paper_id = %s and question_number = %s and part_label = %s""",
-                (m.marks, m.note, m.note, paper_id, m.question_number, m.part_label),
-            )
-            if old is None or m.marks is None or float(old) != m.marks:
-                await conn.execute(
-                    """insert into mark_edits (paper_id, question_number, part_label, old_marks, new_marks, note, actor)
-                       values (%s, %s, %s, %s, %s, %s, %s)""",
-                    (paper_id, m.question_number, m.part_label, old, m.marks, m.note, teacher.id),
-                )
-    await exam_service.recompute_totals(paper_id)
-    return {"ok": True}
+            row=rows.get((m.question_number,m.part_label))
+            if not row: raise HTTPException(400,'This question has not been checked yet.')
+            if m.marks is not None and (m.marks>float(row['max_marks']) or m.marks*2!=int(m.marks*2)):
+                raise HTTPException(400,'Marks must be within the question maximum, in half-mark steps.')
+            old=row['final_marks']
+            await conn.execute("""update paper_marks set final_marks=%s,source='teacher',flagged=false,
+                teacher_note=case when %s::text is null then teacher_note else nullif(%s::text,'') end,updated_at=now()
+                where paper_id=%s and question_number=%s and part_label=%s""",(m.marks,m.note,m.note,paper_id,m.question_number,m.part_label))
+            if old!=m.marks or m.note!=row['teacher_note']:
+                await conn.execute('insert into mark_edits(paper_id,question_number,part_label,old_marks,new_marks,note,actor) values(%s,%s,%s,%s,%s,%s,%s)',(paper_id,m.question_number,m.part_label,old,m.marks,m.note,teacher.id))
+        await conn.execute('update student_papers set reviewed_at=null where id=%s',(paper_id,))
+        await exam_service.recompute_on(conn,paper_id)
+    return {'ok':True}
 
 
 @router.post("/papers/{paper_id}/review")
