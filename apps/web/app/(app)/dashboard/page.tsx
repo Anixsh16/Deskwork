@@ -21,7 +21,6 @@ import { ExamRow } from "@/components/exam-row";
 import { EmptyState, Skeleton } from "@/components/ui/primitives";
 import { api } from "@/lib/api";
 import type { CourseSummary, ExamSummary, Teacher } from "@/lib/types";
-import { greeting } from "@/lib/utils";
 
 export default function Dashboard() {
   const me = useQuery({ queryKey: ["me"], queryFn: () => api<Teacher>("/me") });
@@ -77,7 +76,7 @@ export default function Dashboard() {
         transition={{ duration: 0.4 }}
       >
         <h1 className="text-[32px] font-normal tracking-[-0.015em] text-ink">
-          {greeting()}
+          Welcome back
           {first ? `, ${first}` : ""}
         </h1>
         <p className="mt-1 text-[15px] text-muted">
