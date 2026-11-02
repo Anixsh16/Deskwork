@@ -229,3 +229,13 @@ async def message_docx(message_id: str, teacher: Teacher = Depends(current_teach
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         headers={"Content-Disposition": f'attachment; filename="{name}"'},
     )
+
+
+@router.get('/messages/{message_id}/document')
+async def message_document(message_id: str, teacher: Teacher = Depends(current_teacher)):
+    """Teacher-owned completed content for the normal authenticated print-preview page."""
+    row=await db.fetch_one('''select m.id,m.content,ch.title,ch.bot,ch.id as chat_id,ch.course_id,c.name as course_name
+      from chat_messages m join chats ch on ch.id=m.chat_id join courses c on c.id=ch.course_id
+      where m.id=%s and c.owner_id=%s and m.role='assistant' and m.status='done' ''',message_id,teacher.id)
+    if not row or not row['content'].strip():raise HTTPException(404,'Completed document not found.')
+    return row

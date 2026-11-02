@@ -250,3 +250,17 @@ async def test_upload_inherits_sample_class_flag(database,monkeypatch):
     assert r.status_code==201
     row=await db.fetch_one('select is_sample from student_papers where id=%s',r.json()['id'])
     assert row['is_sample'] is True
+
+
+@pytest.mark.asyncio
+async def test_print_document_requires_owner_and_completed_assistant_message(database):
+    uid,cid,eid,pid,c=database
+    chat=await db.fetch_one("insert into chats(course_id,bot) values(%s,'assignment') returning id",cid)
+    msg=await db.fetch_one("insert into chat_messages(chat_id,role,content) values(%s,'assistant','# Assignment') returning id",chat['id'])
+    r=await c.get(f"/api/messages/{msg['id']}/document")
+    assert r.status_code==200 and r.json()['content']=='# Assignment'
+    other=str(uuid.uuid4());await db.execute('insert into auth.users(id) values(%s)',other)
+    async def outsider():return Teacher(other,'other@example.com',None,None)
+    app.dependency_overrides[current_teacher]=outsider
+    assert (await c.get(f"/api/messages/{msg['id']}/document")).status_code==404
+    await db.execute('delete from auth.users where id=%s',other)

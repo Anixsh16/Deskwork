@@ -20,6 +20,7 @@ import {
   X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -85,7 +86,8 @@ type Pending = { user: ChatMessage | null; assistant: ChatMessage };
 export function ChatView({ courseId, bot }: { courseId: string; bot: Bot }) {
   const cfg = CONFIG[bot];
   const qc = useQueryClient();
-  const [chatId, setChatId] = useState<string | null>(null);
+  const params=useSearchParams();
+  const [chatId, setChatId] = useState<string | null>(params.get('chat'));
   const [showHistory, setShowHistory] = useState(false);
   const [input, setInput] = useState("");
   const [attachments, setAttachments] = useState<{ id: string; filename: string }[]>([]);
@@ -104,6 +106,7 @@ export function ChatView({ courseId, bot }: { courseId: string; bot: Bot }) {
     queryKey: ["chat", chatId],
     queryFn: () => api<Chat>(`/chats/${chatId}`),
     enabled: !!chatId,
+    refetchInterval: q => !streaming && q.state.data?.messages.some(m=>m.status==='streaming') ? 2500 : false,
   });
 
   const messages: ChatMessage[] = [...(chat.data?.messages ?? [])];
@@ -406,7 +409,7 @@ function MessageBubble({
   onRetry?: () => void;
 }) {
   const [copied, setCopied] = useState(false);
-  const docRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   if (m.role === "user") {
     return (
@@ -422,21 +425,7 @@ function MessageBubble({
   }
 
   const waiting = m.status === "streaming" && !m.content;
-  // Prints just this answer in a clean window, so the browser's "Save as PDF" gives a tidy document.
-  const print = () => {
-    const el = docRef.current;
-    const win = window.open("", "_blank", "width=900,height=1000");
-    if (!el || !win) return;
-    const styles = [...document.querySelectorAll('link[rel="stylesheet"], style')].map((n) => n.outerHTML).join("");
-    win.document.write(
-      `<!doctype html><html class="${document.documentElement.className}"><head><title>Deskwork</title>${styles}<style>body{background:#fff;padding:32px 40px}</style></head><body><div class="doc">${el.querySelector(".doc")?.innerHTML ?? ""}</div></body></html>`,
-    );
-    win.document.close();
-    win.onload = () => {
-      win.focus();
-      win.print();
-    };
-  };
+  const print = () => router.push(`/print/${m.id}`);
 
   return (
     <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="rounded-3xl border border-line-soft bg-surface px-5 pt-4 pb-3 shadow-card sm:px-6">
@@ -455,7 +444,7 @@ function MessageBubble({
           {m.sources.length ? "Writing from your slides..." : "Searching your slides..."}
         </div>
       ) : (
-        <div ref={docRef}>
+        <div>
           <Markdown>{m.content || "_No answer was produced. Please try again._"}</Markdown>
         </div>
       )}
