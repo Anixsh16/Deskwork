@@ -1,8 +1,7 @@
 """Add labelled synthetic classes to Yug's account. Never resets or overwrites existing work."""
 
-import asyncio, random, uuid
+import asyncio, uuid
 from pathlib import Path
-import pymupdf
 from app import db, storage
 from app.services.bank import BankQuestion, save_question
 from app.documents import render_pages
@@ -109,39 +108,45 @@ def ident(s):
     return str(uuid.uuid5(NAMESPACE, s))
 
 
-def pdf_bytes(title, lines, hand=False):
-    d = pymupdf.open()
-    page = d.new_page()
-    y = 45
-    font = "/System/Library/Fonts/Supplemental/Comic Sans MS.ttf"
-    name = "hand" if hand and Path(font).exists() else "helv"
-    if name == "hand":
-        page.insert_font(fontname=name, fontfile=font)
-    page.insert_text(
-        (40, y), title, fontsize=16, fontname="hebo", color=(0.1, 0.3, 0.65)
-    )
-    y += 25
-    page.insert_text(
-        (40, y),
-        "SYNTHETIC SAMPLE | For workflow demonstration only",
-        fontsize=9,
-        color=(0.6, 0.3, 0.1),
-    )
-    y += 30
-    for line in lines:
-        box = pymupdf.Rect(40, y, 555, y + 100)
-        used = page.insert_textbox(
-            box, line, fontsize=11, fontname=name, color=(0.12, 0.2, 0.35)
-        )
-        if used < 0:
-            raise ValueError("Sample content overflow")
-        y += 110
-        if y > 700:
-            page = d.new_page()
-            y = 45
-            if name == "hand":
-                page.insert_font(fontname=name, fontfile=font)
-    return d.tobytes()
+def bundle_file(root, relative):
+    path = (root / relative).resolve()
+    if not path.is_relative_to(root.resolve()) or not path.is_file():
+        raise ValueError(f"Missing or invalid sample file: {relative}")
+    return path
+
+
+def load_bundle(root):
+    """Validate every approved asset before opening the database or uploading anything."""
+    import hashlib, json
+    manifest = json.loads((root / "manifest.json").read_text())
+    if manifest.get("version") != 2:
+        raise ValueError("Use the approved handwritten sample bundle (version 2).")
+    subjects = {s["code"]: s for s in manifest["subjects"]}
+    if set(subjects) != {"CN-SAMPLE", "DB-SAMPLE"}:
+        raise ValueError("The bundle must contain both sample subjects.")
+    students = manifest["students"]
+    if len(students) != 28:
+        raise ValueError("The approved bundle must contain 28 answer sheets.")
+    identities = {}
+    for code in subjects:
+        rows = [s for s in students if s["subject_code"] == code]
+        if len(rows) != 14 or {s["index"] for s in rows} != set(range(1, 15)):
+            raise ValueError(f"Expected 14 distinct student records in {code}.")
+        if len({s["enrollment"] for s in rows}) != 14:
+            raise ValueError("Duplicate enrollment in one subject.")
+        for field in ("question_paper", "answer_key"):
+            bundle_file(root, subjects[code][field])
+    for student in students:
+        if not student["name"].strip() or not student["enrollment"].strip():
+            raise ValueError("Missing student identity.")
+        previous = identities.setdefault(student["enrollment"], student["name"])
+        if previous != student["name"]:
+            raise ValueError("Student identity differs between subjects.")
+        for field in ("image", "pdf"):
+            data = bundle_file(root, student[field]).read_bytes()
+            if hashlib.sha256(data).hexdigest() != student[field + "_sha256"]:
+                raise ValueError(f"Sample checksum mismatch: {student[field]}")
+    return manifest
 
 
 async def put_document(prefix, name, data):
@@ -156,145 +161,82 @@ async def put_document(prefix, name, data):
     return original, paths
 
 
-async def main():
+async def main(source, verify_only=False):
+    # Never fall back to typeset handwriting or invented marks when assets are absent.
+    bundle = load_bundle(source)
+    if verify_only:
+        print("Verified 28 approved PNG/PDF pairs. No database or storage writes.")
+        return
     await db.open_pool()
     try:
         owner = await db.fetch_one("select id from teachers where email=%s", OWNER)
         if not owner:
             raise RuntimeError("Main teacher account must sign in first.")
-        root = Path("../.work/final-evaluation/sample-pdfs")
-        root.mkdir(parents=True, exist_ok=True)
-        for ci, (name, code, questions) in enumerate(DATA):
+        for subject in bundle["subjects"]:
+            code = subject["code"]
             cid = ident(str(owner["id"]) + code)
             eid = ident(cid + "exam")
+            students = [s for s in bundle["students"] if s["subject_code"] == code]
+            existing = await db.fetch_all(
+                "select id from student_papers where id=any(%s::uuid[])",
+                [ident(cid + str(s["index"])) for s in students],
+            )
+            existing_ids = {str(p["id"]) for p in existing}
+            missing = [s for s in students if ident(cid + str(s["index"])) not in existing_ids]
+            if not missing:
+                print(subject["name"], "already present; files and marks left unchanged.")
+                continue
             await db.execute(
                 """insert into courses(id,owner_id,name,code,semester,institution,description,is_sample)
-    values(%s,%s,%s,%s,'Final evaluation','JIIT Noida','Synthetic sample class with simulated marks. Not real student records.',true) on conflict(id) do nothing""",
-                cid,
-                owner["id"],
-                name,
-                code,
+                values(%s,%s,%s,%s,'Final evaluation','JIIT Noida',%s,true) on conflict(id) do nothing""",
+                cid, owner["id"], subject["name"], code,
+                "Fictional students with generated handwritten answers and intentional mistakes. Check their images to obtain AI marks.",
             )
-            qtext = "\n\n".join(
-                f"Q{i}. [5 marks] {q[1]}" for i, q in enumerate(questions, 1)
-            )
-            key = "\n\n".join(f"Q{i}. {q[2]}" for i, q in enumerate(questions, 1))
-            qp, qpages = await put_document(
-                f"{owner['id']}/{cid}/samples",
-                "question-paper",
-                pdf_bytes(
-                    name,
-                    [f"Q{i}. [5 marks] {q[1]}" for i, q in enumerate(questions, 1)],
-                ),
-            )
-            kp, kpages = await put_document(
-                f"{owner['id']}/{cid}/samples",
-                "answer-key",
-                pdf_bytes("Answer key", [q[2] for q in questions]),
-            )
-            await db.execute(
-                """insert into exams(id,course_id,title,kind,total_marks,paper_status,key_status,paper_path,paper_filename,paper_pages,key_path,key_filename,key_pages,paper_text,key_text)
-     values(%s,%s,'Sample class assessment','Assignment',20,'ready','ready',%s,'Sample question paper.pdf',%s,%s,'Sample answer key.pdf',%s,%s,%s) on conflict(id) do nothing""",
-                eid,
-                cid,
-                qp,
-                db.jsonb(qpages),
-                kp,
-                db.jsonb(kpages),
-                qtext,
-                key,
-            )
-            async with db.transaction() as c:
-                for i, (topic, text, answer, points) in enumerate(questions, 1):
+            exam = await db.fetch_one("select id from exams where id=%s", eid)
+            if not exam:
+                prefix = f"{owner['id']}/{cid}/samples/approved-v2"
+                qp, qpages = await put_document(prefix, "question-paper", bundle_file(source, subject["question_paper"]).read_bytes())
+                kp, kpages = await put_document(prefix, "answer-key", bundle_file(source, subject["answer_key"]).read_bytes())
+                async with db.transaction() as c:
                     await c.execute(
-                        "insert into exam_questions(exam_id,number,text,marks,topic) values(%s,%s,%s,5,%s) on conflict do nothing",
-                        (eid, i, text, topic),
+                        """insert into exams(id,course_id,title,kind,total_marks,paper_status,key_status,paper_path,paper_filename,paper_pages,key_path,key_filename,key_pages)
+                        values(%s,%s,'Sample class assessment','Assignment',%s,'ready','ready',%s,'Question-Paper.pdf',%s,%s,'Answer-Key.pdf',%s)""",
+                        (eid,cid,sum(float(q["marks"]) for q in subject["questions"]),qp,db.jsonb(qpages),kp,db.jsonb(kpages)),
                     )
-                    scheme = [
-                        {"point": p, "marks": m} for p, m in zip(points, [2, 2, 1])
-                    ]
-                    await c.execute(
-                        """insert into answer_key_items(exam_id,question_number,answer,marking_points) values(%s,%s,%s,%s) on conflict do nothing""",
-                        (eid, i, answer, db.jsonb(scheme)),
-                    )
-                    await save_question(
-                        cid,
-                        BankQuestion(
-                            text=text,
-                            topic=topic,
-                            marks=5,
-                            answer=answer,
-                            kind="numerical" if ci == 0 and i < 3 else "theory",
-                        ),
-                        c,
-                        source_exam_id=eid,
-                        number=i,
-                    )
-            for i in range(1, 15):
-                pid = ident(cid + str(i))
-                enrollment = f"SAMPLE-{ci + 1}-{i:02}"
-                if await db.fetch_one("select 1 from student_papers where id=%s", pid):
-                    continue
-                rng = random.Random(ci * 100 + i)
-                marks = [
-                    max(
-                        0,
-                        min(
-                            5,
-                            round((rng.uniform(1.5, 5) - (1 if j == 1 else 0)) * 2) / 2,
-                        ),
-                    )
-                    for j in range(4)
-                ]
-                lines = [f"Name: Sample Student {i:02}   Enrollment: {enrollment}"]
-                answers = []
-                for j, q in enumerate(questions):
-                    answer = (
-                        q[2]
-                        if marks[j] >= 4
-                        else q[3][0]
-                        if marks[j] >= 2
-                        else "I am unsure of the method."
-                    )
-                    answers.append(answer)
-                    lines.append(f"Q{j + 1}. {answer}")
-                data = pdf_bytes(name + " | Answer sheet", lines, hand=True)
-                (root / f"{enrollment}.pdf").write_bytes(data)
-                path, pages = await put_document(
-                    f"{owner['id']}/{cid}/exams/{eid}/student-papers", enrollment, data
-                )
-                checked = i <= 12
-                await db.execute(
-                    """insert into student_papers(id,exam_id,student_name,enrollment_no,filename,file_path,pages,status,is_sample,total_marks,checked_by,summary)
-      values(%s,%s,%s,%s,%s,%s,%s,%s,true,%s,%s,%s)""",
-                    pid,
-                    eid,
-                    f"Sample Student {i:02}",
-                    enrollment,
-                    enrollment + ".pdf",
-                    path,
-                    db.jsonb(pages),
-                    "checked" if checked else "ready",
-                    sum(marks) if checked else None,
-                    "teacher" if checked else None,
-                    "Synthetic sample: marks are simulated to illustrate analytics, not measured student performance.",
-                )
-                if checked:
-                    for j, m in enumerate(marks, 1):
-                        await db.execute(
-                            """insert into paper_marks(paper_id,question_number,max_marks,final_marks,source,reasoning,student_answer,teacher_note,pages)
-        values(%s,%s,5,%s,'teacher',%s,%s,%s,'[1]')""",
-                            pid,
-                            j,
-                            m,
-                            "Simulated sample mark for demonstrating the analytics workflow.",
-                            answers[j - 1],
-                            "Synthetic example; not an actual teacher assessment.",
+                    for q in subject["questions"]:
+                        await c.execute(
+                            """insert into exam_questions(exam_id,number,text,marks,parts,topic,co,has_figure)
+                            values(%s,%s,%s,%s,%s,%s,%s,%s)""",
+                            (eid,q["number"],q["text"],q["marks"],db.jsonb(q.get("parts") or []),q.get("topic"),q.get("co"),q.get("has_figure",False)),
                         )
-            print(name, "ready (14 sample papers, 2 left unchecked)", flush=True)
+                    for k in subject["key_items"]:
+                        await c.execute(
+                            """insert into answer_key_items(exam_id,question_number,part_label,answer,final_answer,marking_points)
+                            values(%s,%s,%s,%s,%s,%s)""",
+                            (eid,k["question_number"],k.get("part_label") or "",k["answer"],k.get("final_answer"),db.jsonb(k["marking_points"])),
+                        )
+                    for q in subject.get("bank", []):
+                        await save_question(cid, BankQuestion(**q), c, source_exam_id=eid)
+            for student in missing:
+                pid = ident(cid + str(student["index"]))
+                prefix = f"{owner['id']}/{cid}/exams/{eid}/student-papers/handwritten-v2/{student['slug']}"
+                await storage.upload(prefix + ".pdf", bundle_file(source, student["pdf"]).read_bytes(), "application/pdf")
+                await storage.upload(prefix + ".png", bundle_file(source, student["image"]).read_bytes(), "image/png")
+                await db.execute(
+                    """insert into student_papers(id,exam_id,student_name,enrollment_no,batch,filename,file_path,pages,status,is_sample)
+                    values(%s,%s,%s,%s,%s,%s,%s,%s,'ready',true) on conflict(id) do nothing""",
+                    pid,eid,student["name"],student["enrollment"],student.get("batch"),student["slug"] + ".pdf",prefix + ".pdf",db.jsonb([prefix + ".png"]),
+                )
+            print(subject["name"], f"added {len(missing)} handwritten sheets. Check them in the app to calculate marks.")
     finally:
         await db.close_pool()
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    import argparse, os
+    default = Path(__file__).resolve().parents[3] / "Deskwork-docs" / "Handwritten-Sample-Sheets"
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--source", type=Path, default=Path(os.getenv("DESKWORK_SAMPLE_DIR", str(default))))
+    parser.add_argument("--verify-only", action="store_true", help="Check the approved bundle locally without any remote writes")
+    args = parser.parse_args()
+    asyncio.run(main(args.source, args.verify_only))

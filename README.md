@@ -63,7 +63,7 @@ Open http://localhost:3000 and choose **Continue with Google**. To enable a teac
 
 - Apply `supabase/migrations/0002_final_evaluation.sql` after the initial schema (only with permission for the target database).
 - Set `VECTOR_PROVIDER=pinecone`, `PINECONE_API_KEY` and `PINECONE_HOST` for cloud search. The index uses 768 dimensions and cosine similarity.
-- `npm run seed:samples` adds labelled synthetic classes to the main teacher account without replacing existing work.
+- `npm run seed:samples` imports the approved handwritten PNG/PDF bundle from the adjacent `Deskwork-docs/Handwritten-Sample-Sheets` folder (or `DESKWORK_SAMPLE_DIR`). Existing sheets and marks are preserved. New sheets start unchecked; scores come from checking their images, not simulated values. Use `npm run seed:samples -- --verify-only` to validate files without database writes.
 - `npm run test:final` exercises the final features against the running local API. It creates clearly named test plans and exams and uses Gemini quota.
 - `npm run migrate:vectors` copies existing Chroma embeddings to Pinecone without new AI calls.
 - Deploy `apps/web` on Vercel and `backend/Dockerfile` on Render. Set `FRONTEND_ORIGIN` to a comma-separated list of allowed web origins and `NEXT_PUBLIC_API_URL` to the Render URL. Add the Vercel auth callback to Supabase redirect URLs.
